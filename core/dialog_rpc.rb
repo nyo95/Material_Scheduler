@@ -91,6 +91,7 @@ module MSched
     number = (a['number'] || '').to_s.strip
     brand = (a['brand'] || '').to_s.strip.gsub(/\s+/, ' ')
     notes = (a['notes'] || '').to_s.strip.gsub(/\s+/, ' ')
+    upd = nil
     Undo.wrap('Quick Apply') do
       m = MetadataStore.find_material(id); raise 'NOT_FOUND' unless m
       meta = MetadataStore.read_meta(m)
@@ -105,13 +106,24 @@ module MSched
         CodeAllocator.allocate_from_number(m, eff_pref, desired)
       end
       MetadataStore.write_meta(m, { 'brand' => brand, 'notes' => notes })
-      # After applying, emit updated selection so Quick tab reflects new code/type immediately
-      begin
-        MSched::SyncService.material_selected(m)
-      rescue
-      end
+      # Build updated snapshot to return
+      latest = MetadataStore.read_meta(m)
+      sw = nil; begin; sw = MSched::SyncService.swatch_for(m); rescue; end
+      upd = {
+        id: m.persistent_id,
+        name: m.display_name,
+        code: latest['code'],
+        type: latest['type'],
+        number: (latest['code'] && latest['code'].split('-')[1]&.to_i),
+        brand: latest['brand'],
+        notes: latest['notes'],
+        sample: !!latest['sample'],
+        hidden: !!latest['hidden'],
+        locked: !!latest['locked'],
+        swatch: sw
+      }
     end
-    EventBus.publish(:data_changed, {}); { ok: true }
+    EventBus.publish(:data_changed, {}); { ok: true, updated: upd }
   end
 
   DialogRPC.on('normalize_all') { |_a| CodeAllocator.normalize_all }

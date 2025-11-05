@@ -1,7 +1,7 @@
 ﻿;(function(){
   const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
   const normalizeBtn = document.querySelector('[data-action="normalize"]');
-  function updateBulkVisibility(tab){ if(!normalizeBtn) return; normalizeBtn.style.display = (tab==='quick') ? 'none' : ''; }
+  function updateBulkVisibility(tab){ if(!normalizeBtn) return; normalizeBtn.style.display = (tab==='quick') ? 'none' : ''; document.body.classList.toggle('quick-active', tab==='quick'); }
   $$('.ms-tabs .tab').forEach(btn=>btn.addEventListener('click',()=>{
     $$('.ms-tabs .tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
     const tab=btn.dataset.tab; $$('.tabpanel').forEach(s=>s.classList.remove('active')); document.getElementById('tab-'+tab).classList.add('active');
@@ -33,7 +33,19 @@
     updateStatusBar();
   };
   window.__ms_selected_info=function(p){ Quick.onSelected(p); };
-  window.__ms_rpc_resolve=function(p){ var name = p && p.name; if(name==='get_full'){ if(p.result){ window.__ms_receive_full(p.result); } return; } if(['normalize_all','quick_apply','set_flags','kinds_save','delete_material'].indexOf(name)>=0){ rpc('get_full',{}); } else if(name==='export_csv'){ var csv = (p.result && p.result.csv)||''; var blob=new Blob([csv],{type:'text/csv'}); var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download='materials.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); __toast('CSV exported'); } };
+  window.__ms_rpc_resolve=function(p){
+    var name = p && p.name;
+    if(name==='get_full'){ if(p.result){ window.__ms_receive_full(p.result); } return; }
+    if(name==='quick_apply'){
+      if(p.result && p.result.updated){ window.__quickSel = p.result.updated; Quick.render(); }
+      rpc('get_full',{}); return;
+    }
+    if(['normalize_all','set_flags','kinds_save','delete_material'].indexOf(name)>=0){ rpc('get_full',{}); }
+    else if(name==='export_csv'){
+      var csv = (p.result && p.result.csv)||''; var blob=new Blob([csv],{type:'text/csv'});
+      var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download='materials.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); __toast('CSV exported');
+    }
+  };
   window.__ms_rpc_reject=function(p){ __toast('Error: '+p.error); console.error(p.error); };
   document.querySelector('[data-action="refresh"]').addEventListener('click',function(){ rpc('get_full',{}); });
   document.querySelector('[data-action="normalize"]').addEventListener('click',function(){ rpc('normalize_all',{}); });
