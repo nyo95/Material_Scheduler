@@ -15,17 +15,25 @@
     const disabled = p.locked ? 'disabled' : '';
     const chip = (lbl,on)=>`<span class="chip" data-k="${lbl}">${lbl}: <span class="switch ${on?'active':''}"><span></span></span></span>`;
     return `
-      <div class="tablewrap" style="padding:10px">
-        <div style="display:grid; grid-template-columns: 160px 1fr; gap:26px; align-items:start">
-          <div class="thumb" style="width:110px; height:110px; border-radius:6px; border:1px solid #e5e7eb; ${swStyle}"></div>
-          <div style="display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap">
-            <div><div class="muted">Current Code</div><div class="tag" id="q_code">${p.code||''}</div></div>
-            <div style="min-width:220px"><div class="muted">Material Type</div><select id="q_type" class="inp" ${disabled}>${opts}</select></div>
-            <div style="min-width:220px"><div class="muted">Brand</div><input id="q_brand" class="inp" type="text" value="${p.brand||''}" ${disabled}></div>
-            <div style="min-width:220px"><div class="muted">SKU Type</div><input id="q_subtype" class="inp" type="text" value="${p.subtype||''}" ${disabled}></div>
-            <div style="min-width:280px; flex:1"><div class="muted">Notes</div><input id="q_notes" class="inp" type="text" value="${p.notes||''}" ${disabled}></div>
-            <div><button class="btn btn-primary" id="q_apply">Apply</button></div>
-            <div style="margin-left:auto">${chip('locked',!!p.locked)} ${chip('sample',!!p.sample)}</div>
+      <div class="tablewrap" style="padding:12px">
+        <div class="quick-grid">
+          <div class="thumb quick-thumb" style="${swStyle}"></div>
+          <div class="code-block">
+            <div class="muted" style="margin-bottom:4px">Code</div>
+            <div class="code-value" id="q_code">${p.code||'—'}</div>
+          </div>
+          <div class="col-stack">
+            <div class="field"><div class="muted">Material Type</div><select id="q_type" class="inp" ${disabled}>${opts}</select></div>
+            <div class="field"><div class="muted">Brand</div><input id="q_brand" class="inp" type="text" value="${p.brand||''}" ${disabled}></div>
+            <div class="quick-row">
+              <div class="field-grow"><div class="muted">Type (SKU Type)</div><input id="q_subtype" class="inp" type="text" value="${p.subtype||''}" ${disabled}></div>
+              <div class="flags-row">${chip('locked',!!p.locked)} ${chip('sample',!!p.sample)}</div>
+              <div><button class="btn btn-primary" id="q_apply">Apply</button></div>
+            </div>
+          </div>
+          <div class="notes-col">
+            <div class="muted">Notes</div>
+            <textarea id="q_notes" class="inp" rows="4" ${disabled}>${(p.notes||'')}</textarea>
           </div>
         </div>
       </div>`;

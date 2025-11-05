@@ -67,6 +67,23 @@ body.ms.light{
 /* Table helpers */
 .tablewrap{ border:1px solid var(--border); border-radius:var(--radius); overflow:auto; background:#fff }
 
+/* Quick Edit layout */
+.quick-grid{ display:grid; grid-template-columns: 140px 140px 1fr 360px; gap:18px 18px; align-items:start }
+.quick-thumb{ width:120px; height:120px; border-radius:8px; border:1px solid var(--border); background:#f3f4f6 }
+.code-block{ display:flex; flex-direction:column; gap:6px }
+.code-value{ border:1px solid var(--border); border-radius:8px; padding:10px 12px; font-weight:700; letter-spacing:0.3px; background:#f9fafb; min-height:38px; display:flex; align-items:center }
+.col-stack{ display:flex; flex-direction:column; gap:10px; min-width:280px }
+.notes-col textarea{ width:100%; min-height:104px; resize:vertical }
+.quick-row{ display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap }
+.field{ min-width:220px }
+.field-grow{ flex:1; min-width:240px }
+.flags-row{ display:flex; gap:8px; align-items:center }
+
+@media (max-width: 1100px){
+  .quick-grid{ grid-template-columns: 140px 1fr; grid-auto-rows:auto }
+  .notes-col{ grid-column: 1 / -1 }
+}
+
 /* Panels */
 .tabpanel{ display:none }
 .tabpanel.active{ display:block }
