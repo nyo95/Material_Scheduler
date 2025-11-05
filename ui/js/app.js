@@ -22,6 +22,8 @@
   window.__ms_receive_full=function(data){
     State.rows=data.entries||[]; State.kinds=data.kinds||{};
     var actEl = document.querySelector('.ms-tabs .tab.active'); var active = (actEl && actEl.dataset ? actEl.dataset.tab : 'quick');
+    // If there is an active selection, refresh its snapshot from latest rows so UI shows updated code/type
+    try{ if(window.__quickSel && window.__quickSel.id){ var upd=(State.rows||[]).find(r=>r.id===window.__quickSel.id); if(upd){ window.__quickSel=upd; } } }catch(e){}
     if(active==='quick') Quick.render(); if(active==='scheduler') Scheduler.render();
     if(active==='kinds') Kinds.render();
     if(active==='samples') Samples.render(); if(active==='hidden') Hidden.render();

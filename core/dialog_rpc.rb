@@ -105,6 +105,11 @@ module MSched
         CodeAllocator.allocate_from_number(m, eff_pref, desired)
       end
       MetadataStore.write_meta(m, { 'brand' => brand, 'notes' => notes })
+      # After applying, emit updated selection so Quick tab reflects new code/type immediately
+      begin
+        MSched::SyncService.material_selected(m)
+      rescue
+      end
     end
     EventBus.publish(:data_changed, {}); { ok: true }
   end
