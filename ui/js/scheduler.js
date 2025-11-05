@@ -35,9 +35,9 @@
       `<td class="td-notes cell-input col-notes"><input class="t_notes" type="text" value="${r.notes||''}" ${disabled}></td>`+
       `<td class="td-flags col-flags">${flagHtml(r)}</td>`+
       `<td class="td-actions">`+
-        `<button class="btn mini t_apply" ${isDirty?'':'disabled'}>Apply</button> `+
-        `<button class="btn mini t_revert" ${isDirty?'':'disabled'}>Revert</button> `+
-        `<button class="btn mini t_delete" ${r.locked?'disabled':''}>Delete</button>`+
+        `<button class="btn mini t_apply" title="Apply changes" ${isDirty?'':'disabled'}>Apply</button> `+
+        `<button class="btn mini t_revert" title="Revert pending" ${isDirty?'':'disabled'}>Revert</button> `+
+        `<button class="btn mini t_delete" title="Delete material" ${r.locked?'disabled':''}>Delete</button>`+
       `</td>`+
     `</tr>`;
   }
@@ -63,7 +63,7 @@
     tr.addEventListener('dragover',ev=>{ ev.preventDefault(); const locked = (tr.getAttribute('data-locked')==='1'); const srcId = parseInt(ev.dataTransfer.getData('text/plain')||'0',10); const srcTr = document.querySelector(`tr[data-id="${srcId}"]`); const typeOk = srcTr && (srcTr.getAttribute('data-type')===tr.getAttribute('data-type')); if(!locked && typeOk){ tr.classList.add('drop-target'); } else { tr.classList.remove('drop-target'); } });
     tr.addEventListener('dragleave',()=>{ tr.classList.remove('drop-target'); });
     tr.addEventListener('drop',ev=>{ ev.preventDefault(); tr.classList.remove('drop-target'); const src = parseInt(ev.dataTransfer.getData('text/plain')||'0',10); const dst = id; if(!src||!dst||src===dst){return;} const srcTr=document.querySelector(`tr[data-id="${src}"]`); const typeOk = srcTr && (srcTr.getAttribute('data-type')===tr.getAttribute('data-type')); const dstLocked = (tr.getAttribute('data-locked')==='1'); const srcLocked = srcTr && (srcTr.getAttribute('data-locked')==='1'); if(srcLocked || dstLocked){ __toast('Cannot swap: locked'); return; } if(!typeOk){ __toast('Types must match'); return; } __rpc('swap_codes',{ a:src, b:dst }); });
-    const del = tr.querySelector('.t_delete'); if(del){ del.addEventListener('click',()=>__rpc('delete_material',{id:id})); }
+    const del = tr.querySelector('.t_delete'); if(del){ del.addEventListener('click',()=>{ if(confirm('Delete this material?')){ __rpc('delete_material',{id:id}); } }); }
     tr.querySelectorAll('.flag').forEach(btn=>{
       const key=btn.getAttribute('data-k');
       btn.addEventListener('click',()=>{ const locked = (tr.getAttribute('data-locked')==='1'); if(locked && key!=='sample'){ __toast('Locked: only sample allowed'); return; } const on=!btn.classList.contains('on'); btn.classList.toggle('on'); if(window.__setFlag){ window.__setFlag(id,key,on); } else { const flags={}; flags[key]=on; __rpc('set_flags',{ ids:[id], flags:flags }); } });

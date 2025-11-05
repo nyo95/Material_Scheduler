@@ -9,7 +9,7 @@ th.sortable{ cursor:pointer; user-select:none }
 .thumb-sm{ width:38px; height:38px; border-radius:6px; border:1px solid var(--border); background:#f3f4f6 }
 .cell-input select,.cell-input input{ width:100% }
 .td-flags{ white-space:normal; overflow:visible }
-.td-flags{ display:flex; gap:8px; flex-wrap:wrap }
+.td-flags{ display:flex; gap:8px; align-items:center; flex-wrap:nowrap }
 .dirty td{ background:#fffbea }
 .drag-handle{ display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; margin-right:6px; cursor:grab; opacity:.8 }
 .drag-handle:hover{ opacity:1 }

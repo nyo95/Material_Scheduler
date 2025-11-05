@@ -58,9 +58,12 @@
     }
     if(name==='quick_apply'){
       if(p.result && p.result.updated){ window.__quickSel = p.result.updated; Quick.render(); }
-      rpc('get_full',{}); return;
+      __toast('Saved'); rpc('get_full',{}); return;
     }
-    if(['normalize_all','set_flags','kinds_save','delete_material','swap_codes'].indexOf(name)>=0){ rpc('get_full',{}); }
+    if(name==='normalize_all'){ var n=(p.result&&p.result.changed&&p.result.changed.length)||0; __toast('Normalized '+n); rpc('get_full',{}); }
+    else if(name==='delete_material'){ __toast('Deleted'); rpc('get_full',{}); }
+    else if(name==='swap_codes'){ __toast('Swapped'); rpc('get_full',{}); }
+    else if(['set_flags','kinds_save'].indexOf(name)>=0){ rpc('get_full',{}); }
     else if(name==='export_csv'){
       var csv = (p.result && p.result.csv)||''; var blob=new Blob([csv],{type:'text/csv'});
       var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download='materials.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); __toast('CSV exported');
