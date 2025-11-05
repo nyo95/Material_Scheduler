@@ -7,13 +7,13 @@
       `<select id="sch_filter" class="inp" style="width:180px">${filterOptions()}</select>`+
       `</div>`+
       `<div class="tablewrap"><table><thead><tr>`+
-      `${th('code','Code',90)}`+
-      `${th('thumb','Thumbnail',70)}`+
+      `${th('code','Code',80)}`+
+      `${th('thumb','Thumbnail',48)}`+
       `${th('kind_label','Material Type')}`+
       `${th('brand','Brand')}`+
       `${th('subtype','Type (SKU)')}`+
       `${th('notes','Notes')}`+
-      `${th('flags','Flags',160)}`+
+      `${th('flags','Flags',200)}`+
       `<th style="width:60px"></th>`+
       `</tr></thead><tbody id="sch_rows"></tbody></table></div>`;
   }
@@ -25,14 +25,14 @@
     if(sw && sw.kind==='texture' && sw.path){ const safe=(sw.path||'').replace(/\\\\/g,'/'); const v=sw.stamp||0; swStyle = `background-image:url('file:///${safe}?v=${v}'); background-size:cover;`; }
     else if(sw && sw.kind==='color' && Array.isArray(sw.rgba)){ const a=(sw.rgba[3]||255)/255.0; swStyle=`background: rgba(${sw.rgba[0]||0},${sw.rgba[1]||0},${sw.rgba[2]||0},${a});`; }
     return `<tr data-id="${r.id}" class="${r.locked?'locked':''}">`+
-      `<td>${r.code||''}</td>`+
-      `<td><div class="thumb thumb-sm" style="${swStyle}"></div></td>`+
-      `<td><select class="t_type" ${disabled}>${typeOptionsLabel(r.type)}</select></td>`+
-      `<td><input class="t_brand" type="text" value="${r.brand||''}" ${disabled}></td>`+
-      `<td><input class="t_subtype" type="text" value="${r.subtype||''}" ${disabled}></td>`+
-      `<td><input class="t_notes" type="text" value="${r.notes||''}" ${disabled}></td>`+
-      `<td>${flagHtml(r)}</td>`+
-      `<td><button class="btn mini t_delete" ${r.locked?'disabled':''}>Delete</button></td>`+
+      `<td class="td-code">${r.code||''}</td>`+
+      `<td class="td-thumb"><div class="thumb thumb-sm" style="${swStyle}"></div></td>`+
+      `<td class="td-type cell-input"><select class="t_type" ${disabled}>${typeOptionsLabel(r.type)}</select></td>`+
+      `<td class="td-brand cell-input"><input class="t_brand" type="text" value="${r.brand||''}" ${disabled}></td>`+
+      `<td class="td-subtype cell-input"><input class="t_subtype" type="text" value="${r.subtype||''}" ${disabled}></td>`+
+      `<td class="td-notes cell-input"><input class="t_notes" type="text" value="${r.notes||''}" ${disabled}></td>`+
+      `<td class="td-flags">${flagHtml(r)}</td>`+
+      `<td class="td-actions"><button class="btn mini t_delete" ${r.locked?'disabled':''}>Delete</button></td>`+
     `</tr>`;
   }
   function flagHtml(r){
