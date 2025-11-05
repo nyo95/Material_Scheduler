@@ -15,7 +15,7 @@
     const disabled = p.locked ? 'disabled' : '';
     const chip = (lbl,on)=>`<span class="chip" data-k="${lbl}">${lbl}: <span class="switch ${on?'active':''}"><span></span></span></span>`;
     return `
-      <div class="tablewrap" style="padding:12px">
+      <div class="tablewrap quick-wrap" style="padding:12px">
         <div class="quick-grid">
           <div class="thumb quick-thumb" style="${swStyle}"></div>
           <div class="code-block">
@@ -25,15 +25,12 @@
           <div class="col-stack">
             <div class="field"><div class="muted">Material Type</div><select id="q_type" class="inp" ${disabled}>${opts}</select></div>
             <div class="field"><div class="muted">Brand</div><input id="q_brand" class="inp" type="text" value="${p.brand||''}" ${disabled}></div>
-            <div class="quick-row">
-              <div class="field-grow"><div class="muted">Type (SKU Type)</div><input id="q_subtype" class="inp" type="text" value="${p.subtype||''}" ${disabled}></div>
-              <div class="flags-row">${chip('locked',!!p.locked)} ${chip('sample',!!p.sample)}</div>
-              <div><button class="btn btn-primary" id="q_apply">Apply</button></div>
-            </div>
+            <div class="field-grow"><div class="muted">Type (SKU Type)</div><input id="q_subtype" class="inp" type="text" value="${p.subtype||''}" ${disabled}></div>
           </div>
           <div class="notes-col">
             <div class="muted">Notes</div>
-            <textarea id="q_notes" class="inp" rows="4" ${disabled}>${(p.notes||'')}</textarea>
+            <textarea id="q_notes" class="inp quick-notes" rows="4" ${disabled}>${(p.notes||'')}</textarea>
+            <div class="notes-actions">${chip('locked',!!p.locked)} ${chip('sample',!!p.sample)} <button class="btn btn-primary" id="q_apply">Apply</button></div>
           </div>
         </div>
       </div>`;
