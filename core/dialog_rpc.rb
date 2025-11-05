@@ -175,17 +175,27 @@ module MSched
     t1 = c1.split('-',2)[0]; t2 = c2.split('-',2)[0]
     # Enforce same prefix/type
     raise 'TYPE_MISMATCH' unless t1 == t2
-    Undo.wrap('Swap Codes') do
-      # Use a temp unique name to avoid collision
-      tmp = "__swap_#{Time.now.to_i}_#{rand(100000)}"
-      m1.name = tmp
-      MetadataStore.write_meta(m1, meta1.merge({ 'code'=>nil }))
-      # Assign code1 to m2
-      m2.name = c1
-      MetadataStore.write_meta(m2, meta2.merge({ 'code'=>c1, 'type'=>t1 }))
-      # Assign code2 to m1
-      m1.name = c2
-      MetadataStore.write_meta(m1, meta1.merge({ 'code'=>c2, 'type'=>t2 }))
+    # Details-only swap: keep code/type with their current materials (containers),
+    # exchange descriptive metadata only (brand/subtype/notes/sample flags).
+    fields = %w[brand subtype notes sample sample_received sample_notes]
+    patch1 = {}
+    patch2 = {}
+    fields.each do |k|
+      patch1[k] = meta2[k]
+      patch2[k] = meta1[k]
+    end
+    Undo.wrap('Swap Details') do
+      MetadataStore.write_meta(m1, meta1.merge(patch1))
+      MetadataStore.write_meta(m2, meta2.merge(patch2))
+      # Ensure 'type' stays aligned with code prefix (safety)
+      MetadataStore.write_meta(m1, meta1.merge({ 'type'=>t1 }))
+      MetadataStore.write_meta(m2, meta2.merge({ 'type'=>t2 }))
+      # Material names remain their codes (no rename)
+      begin
+        m1.name = c1 if m1.name != c1
+        m2.name = c2 if m2.name != c2
+      rescue
+      end
     end
     EventBus.publish(:data_changed, {}); { ok: true }
   end

@@ -31,7 +31,7 @@
           <div class="notes-col">
             <div class="muted">Notes</div>
             <textarea id="q_notes" class="inp quick-notes" rows="4" ${disabled}>${(p.notes||'')}</textarea>
-            <div class="notes-actions">${chip('locked',!!p.locked)} ${chip('sample',!!p.sample)} ${chip('hidden',!!p.hidden)} <button class="btn btn-primary" id="q_apply">Apply</button></div>
+            <div class="notes-actions">${chip('locked',!!p.locked)} ${chip('sample',!!p.sample)} ${chip('hidden',!!p.hidden)} <button class="btn btn-primary btn-lg" id="q_apply" title="Apply changes"><svg width="16" height="16" style="margin-right:6px"><use href="#ico-apply"/></svg>Apply</button></div>
           </div>
         </div>
       </div>`;
