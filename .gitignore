@@ -32,3 +32,4 @@ types_*.bak.json
 
 # Legacy tmp assets
 old_material_scheduler/material_scheduler/tmp/
+ui/tmp/

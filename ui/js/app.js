@@ -1,8 +1,11 @@
 ﻿;(function(){
   const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+  const normalizeBtn = document.querySelector('[data-action="normalize"]');
+  function updateBulkVisibility(tab){ if(!normalizeBtn) return; normalizeBtn.style.display = (tab==='quick') ? 'none' : ''; }
   $$('.ms-tabs .tab').forEach(btn=>btn.addEventListener('click',()=>{
     $$('.ms-tabs .tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
     const tab=btn.dataset.tab; $$('.tabpanel').forEach(s=>s.classList.remove('active')); document.getElementById('tab-'+tab).classList.add('active');
+    updateBulkVisibility(tab);
     if(tab==='quick') Quick.render(); if(tab==='scheduler') Scheduler.render();
     if(tab==='kinds') Kinds.render();
     if(tab==='samples') Samples.render(); if(tab==='hidden') Hidden.render();
@@ -36,6 +39,7 @@
   document.querySelector('[data-action="normalize"]').addEventListener('click',function(){ rpc('normalize_all',{}); });
   document.querySelector('[data-action="export"]').addEventListener('click',function(){ var cols=Scheduler.currentColumns(); rpc('export_csv',{ cols: cols }); });
   window.State={ rows:[], kinds:{}, get visibleRows(){return this.rows.filter(r=>!r.hidden)}, get sampleRows(){return this.rows.filter(r=>r.sample&&!r.hidden)}, get hiddenRows(){return this.rows.filter(r=>r.hidden)} };
+  updateBulkVisibility('quick');
   rpc('get_full',{});
 })();
 

@@ -33,6 +33,7 @@
     def self.material_selected(mat)
       return unless mat
       meta = MetadataStore.read_meta(mat)
+      sw = swatch_for(mat)
       payload = {
         id: mat.persistent_id,
         name: mat.display_name,
@@ -43,7 +44,8 @@
         notes: meta['notes'],
         sample: !!meta['sample'],
         hidden: !!meta['hidden'],
-        locked: !!meta['locked']
+        locked: !!meta['locked'],
+        swatch: sw
       }
       MSched::EventBus.publish(:selected_material_info, payload)
     end
@@ -59,6 +61,7 @@
         end
         if mat
           meta = MetadataStore.read_meta(mat)
+          sw = swatch_for(mat)
           payload = {
             id: mat.persistent_id,
             name: mat.display_name,
@@ -69,12 +72,30 @@
             notes: meta['notes'],
             sample: !!meta['sample'],
             hidden: !!meta['hidden'],
-            locked: !!meta['locked']
+            locked: !!meta['locked'],
+            swatch: sw
           }
           MSched::EventBus.publish(:selected_material_info, payload)
         else
           MSched::EventBus.publish(:selected_material_info, nil)
         end
+      end
+    end
+
+    def self.swatch_for(mat)
+      begin
+        if mat.texture
+          dir = File.join(MSched::ROOT, 'ui', 'tmp')
+          Dir.mkdir(dir) unless File.exist?(dir)
+          path = File.join(dir, "mat_#{mat.persistent_id}.png")
+          mat.texture.write(path)
+          return { kind: 'texture', path: path }
+        else
+          c = mat.color
+          return { kind: 'color', rgba: [c.red, c.green, c.blue, (c.alpha || 255)] }
+        end
+      rescue
+        return nil
       end
     end
   end
