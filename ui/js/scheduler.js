@@ -26,7 +26,7 @@
     else if(sw && sw.kind==='color' && Array.isArray(sw.rgba)){ const a=(sw.rgba[3]||255)/255.0; swStyle=`background: rgba(${sw.rgba[0]||0},${sw.rgba[1]||0},${sw.rgba[2]||0},${a});`; }
     const isDirty = !!(State.pending && State.pending[r.id]);
     return `<tr data-id="${r.id}" class="${r.locked?'locked':''} ${isDirty?'dirty':''}">`+
-      `<td class="td-code">${r.code||''}</td>`+
+      `<td class="td-code"><span class="drag-handle" title="Drag to swap"><svg width="14" height="14"><use href="#ico-drag"/></svg></span> ${r.code||''}</td>`+
       `<td class="td-thumb"><div class="thumb thumb-sm" style="${swStyle}"></div></td>`+
       `<td class="td-type cell-input"><select class="t_type" ${disabled}>${typeOptionsLabel(r.type)}</select></td>`+
       `<td class="td-brand cell-input"><input class="t_brand" type="text" value="${r.brand||''}" ${disabled}></td>`+
@@ -52,15 +52,16 @@
   function markDirty(id, patch){ if(!State.pending) State.pending={}; const cur=State.pending[id]||{}; State.pending[id]=Object.assign({},cur,patch||{}); const tr=document.querySelector(`tr[data-id="${id}"]`); if(tr){ tr.classList.add('dirty'); const ap=tr.querySelector('.t_apply'), rv=tr.querySelector('.t_revert'); if(ap) ap.removeAttribute('disabled'); if(rv) rv.removeAttribute('disabled'); } }
   function wireRows(){ $$('#sch_rows tr').forEach(tr=>{
     const id=parseInt(tr.getAttribute('data-id'),10);
-    // Drag & drop swap on code cell
-    const codeCell = tr.querySelector('.td-code');
-    if(codeCell){
-      tr.setAttribute('draggable','true');
-      tr.addEventListener('dragstart',ev=>{ ev.dataTransfer.setData('text/plain', String(id)); ev.dataTransfer.effectAllowed = 'move'; tr.classList.add('dragging'); });
-      tr.addEventListener('dragend',()=>{ tr.classList.remove('dragging'); });
-      tr.addEventListener('dragover',ev=>{ ev.preventDefault(); ev.dataTransfer.dropEffect = 'move'; });
-      tr.addEventListener('drop',ev=>{ ev.preventDefault(); const src = parseInt(ev.dataTransfer.getData('text/plain')||'0',10); const dst = id; if(src && dst && src!==dst){ __rpc('swap_codes',{ a:src, b:dst }); } });
+    // Drag & drop swap via handle
+    const handle = tr.querySelector('.drag-handle');
+    if(handle){
+      handle.setAttribute('draggable','true');
+      handle.addEventListener('dragstart',ev=>{ ev.stopPropagation(); ev.dataTransfer.setData('text/plain', String(id)); ev.dataTransfer.effectAllowed = 'move'; tr.classList.add('dragging'); });
+      handle.addEventListener('dragend',()=>{ tr.classList.remove('dragging'); });
     }
+    tr.addEventListener('dragover',ev=>{ ev.preventDefault(); tr.classList.add('drop-target'); });
+    tr.addEventListener('dragleave',()=>{ tr.classList.remove('drop-target'); });
+    tr.addEventListener('drop',ev=>{ ev.preventDefault(); tr.classList.remove('drop-target'); const src = parseInt(ev.dataTransfer.getData('text/plain')||'0',10); const dst = id; if(src && dst && src!==dst){ __rpc('swap_codes',{ a:src, b:dst }); } });
     const del = tr.querySelector('.t_delete'); if(del){ del.addEventListener('click',()=>__rpc('delete_material',{id:id})); }
     tr.querySelectorAll('.chip').forEach(chip=>{
       const key=chip.getAttribute('data-k'); const sw=chip.querySelector('.switch');

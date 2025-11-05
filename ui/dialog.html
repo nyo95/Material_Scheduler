@@ -6,14 +6,30 @@
   <link rel='stylesheet' href='css/theme.css'/>
   <link rel='stylesheet' href='css/table.css'/>
   <link rel='stylesheet' href='css/forms.css'/>
+  <!-- Inline SVG sprite for lightweight icons -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="ico-refresh" viewBox="0 0 24 24"><path fill="currentColor" d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.9 6h-2.05A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L14 10h6V4l-2.35 2.35z"/></symbol>
+    <symbol id="ico-normalize" viewBox="0 0 24 24"><path fill="currentColor" d="M3 17h6v-2H3v2zm0-4h10v-2H3v2zm0-6v2h14V7H3zm16 10l3-3l-1.4-1.4L20 13.2l-1.6-1.6L17 13l3 3z"/></symbol>
+    <symbol id="ico-export" viewBox="0 0 24 24"><path fill="currentColor" d="M5 20h14v-2H5v2zM12 2l-5 5h3v6h4V7h3l-5-5z"/></symbol>
+    <symbol id="ico-delete" viewBox="0 0 24 24"><path fill="currentColor" d="M6 7h12v14H6zM9 4h6l1 2H8l1-2z"/></symbol>
+    <symbol id="ico-apply" viewBox="0 0 24 24"><path fill="currentColor" d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></symbol>
+    <symbol id="ico-revert" viewBox="0 0 24 24"><path fill="currentColor" d="M12 5V2L7 7l5 5V9c3.3 0 6 2.7 6 6a6 6 0 0 1-6 6c-2.2 0-4.1-1.2-5.2-3H5.6A8 8 0 0 0 20 15a8 8 0 0 0-8-8z"/></symbol>
+    <symbol id="ico-drag" viewBox="0 0 24 24"><path fill="currentColor" d="M9 3h2v2H9V3m4 0h2v2h-2V3M9 9h2v2H9V9m4 0h2v2h-2V9M9 15h2v2H9v-2m4 0h2v2h-2v-2"/></symbol>
+  </svg>
 </head>
 <body class='ms light'>
   <header class='ms-header'>
     <div class='ms-title'>Material Scheduler <span class='muted'>v0.4.x</span></div>
     <div class='ms-actions'>
-      <button class='btn' data-action='refresh'><span class='ico'>⟳</span> Refresh</button>
-      <button class='btn btn-primary' data-action='normalize'><span class='ico'>⥂</span> Normalize</button>
-      <button class='btn' data-action='export'><span class='ico'>⬇</span> Export CSV</button>
+      <button class='btn' data-action='refresh' title='Refresh'>
+        <span class='ico'><svg width='16' height='16'><use href='#ico-refresh'/></svg></span> Refresh
+      </button>
+      <button class='btn btn-primary' data-action='normalize' title='Normalize numbers (fill gaps)'>
+        <span class='ico'><svg width='16' height='16'><use href='#ico-normalize'/></svg></span> Normalize
+      </button>
+      <button class='btn' data-action='export' title='Export CSV'>
+        <span class='ico'><svg width='16' height='16'><use href='#ico-export'/></svg></span> Export CSV
+      </button>
     </div>
   </header>
 

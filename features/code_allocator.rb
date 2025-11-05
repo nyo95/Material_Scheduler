@@ -66,22 +66,39 @@
     def self.normalize_all
       changed = []
       Undo.wrap('Normalize Materials') do
-        groups = Hash.new{|h,k| h[k]=[]}
-        Sketchup.active_model.materials.each{|m| groups[MetadataStore.read_meta(m)['type']] << m }
+        used_ids = MetadataStore.used_material_ids
+        groups = Hash.new { |h,k| h[k] = [] }
+        # Group USED materials by prefix
+        Sketchup.active_model.materials.each do |m|
+          next unless used_ids.include?(m.persistent_id)
+          meta = MetadataStore.read_meta(m)
+          pref = meta['type'] || (canonical(meta['code'] || m.display_name)&.split('-',2)&.first)
+          groups[pref] << m if pref && pref != ''
+        end
         groups.each do |prefix, mats|
-          next unless prefix && prefix != ''
-          mats.sort_by!{|m| m.persistent_id }
+          mats.sort_by! { |m| m.persistent_id }
+          # numbers already occupied by locked/hidden used materials
+          occupied = []
           mats.each do |m|
             meta = MetadataStore.read_meta(m)
-            next if meta['hidden'] || meta['locked']
-            desired = RulesEngine.number_of(meta['code']) || 1
-            n = next_free_from(prefix, desired, exclude_pid: m.persistent_id)
+            if meta['locked'] || meta['hidden']
+              n = number_of(meta['code'] || m.display_name)
+              occupied << n if n && n > 0
+            end
+          end
+          # assign smallest available to the rest
+          mats.each do |m|
+            meta = MetadataStore.read_meta(m)
+            next if meta['locked'] || meta['hidden']
+            n = 1
+            n += 1 while occupied.include?(n)
             code = RulesEngine.make_code(prefix, n)
-            if m.name != code || meta['code'] != code
-              MetadataStore.write_meta(m, { 'code'=>code })
+            unless (meta['code'] == code) && (m.name == code)
+              MetadataStore.write_meta(m, { 'code' => code, 'type' => prefix })
               m.name = code
               changed << { id: m.persistent_id, code: code }
             end
+            occupied << n
           end
         end
       end

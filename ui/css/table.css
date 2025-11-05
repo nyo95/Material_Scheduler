@@ -11,6 +11,9 @@ th.sortable{ cursor:pointer; user-select:none }
 .td-flags{ white-space:normal; overflow:visible }
 .td-flags{ display:flex; gap:8px; flex-wrap:wrap }
 .dirty td{ background:#fffbea }
+.drag-handle{ display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; margin-right:6px; cursor:grab; opacity:.8 }
+.drag-handle:hover{ opacity:1 }
+.drop-target{ outline:2px dashed var(--brand-2); outline-offset:-2px }
 
 @media (max-width: 1100px){
   .thumb-sm{ width:30px; height:30px }

@@ -40,7 +40,7 @@
       if(p.result && p.result.updated){ window.__quickSel = p.result.updated; Quick.render(); }
       rpc('get_full',{}); return;
     }
-    if(['normalize_all','set_flags','kinds_save','delete_material'].indexOf(name)>=0){ rpc('get_full',{}); }
+    if(['normalize_all','set_flags','kinds_save','delete_material','swap_codes'].indexOf(name)>=0){ rpc('get_full',{}); }
     else if(name==='export_csv'){
       var csv = (p.result && p.result.csv)||''; var blob=new Blob([csv],{type:'text/csv'});
       var url=URL.createObjectURL(blob); var a=document.createElement('a'); a.href=url; a.download='materials.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url); __toast('CSV exported');
