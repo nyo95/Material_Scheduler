@@ -100,6 +100,7 @@ module MSched
     number = (a['number'] || '').to_s.strip
     brand = (a['brand'] || '').to_s.strip.gsub(/\s+/, ' ')
     notes = (a['notes'] || '').to_s.strip.gsub(/\s+/, ' ')
+    subtype = (a['subtype'] || '').to_s.strip.gsub(/\s+/, ' ')
     upd = nil
     Undo.wrap('Quick Apply') do
       m = MetadataStore.find_material(id); raise 'NOT_FOUND' unless m
@@ -114,7 +115,7 @@ module MSched
         desired = number.to_i > 0 ? number.to_i : (RulesEngine.number_of(meta['code']) || 1)
         CodeAllocator.allocate_from_number(m, eff_pref, desired)
       end
-      MetadataStore.write_meta(m, { 'brand' => brand, 'notes' => notes })
+      MetadataStore.write_meta(m, { 'brand' => brand, 'notes' => notes, 'subtype' => subtype })
       # Build updated snapshot to return
       latest = MetadataStore.read_meta(m)
       sw = nil; begin; sw = MSched::SyncService.swatch_for(m); rescue; end
@@ -126,6 +127,7 @@ module MSched
         number: (latest['code'] && latest['code'].split('-')[1]&.to_i),
         brand: latest['brand'],
         notes: latest['notes'],
+        subtype: latest['subtype'],
         sample: !!latest['sample'],
         hidden: !!latest['hidden'],
         locked: !!latest['locked'],
