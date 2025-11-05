@@ -58,6 +58,15 @@ module MSched
       dialog.show
     end
 
+    def self.close
+      begin
+        @dlg.close if @dlg
+      rescue
+      ensure
+        @dlg = nil
+      end
+    end
+
     def self.on(name, &blk)
       @handlers[name] = blk
     end

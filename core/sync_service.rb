@@ -30,6 +30,24 @@
       Sketchup.active_model.materials.add_observer(@materials_obs)
     end
 
+    def self.stop
+      # Detach observers to avoid duplicates when reloading
+      begin
+        if @selection_obs
+          Sketchup.active_model.selection.remove_observer(@selection_obs)
+          @selection_obs = nil
+        end
+      rescue; end
+      begin
+        if @materials_obs
+          Sketchup.active_model.materials.remove_observer(@materials_obs)
+          @materials_obs = nil
+        end
+      rescue; end
+      UI.stop_timer(@timer) if @timer
+      @timer = nil
+    end
+
     def self.material_selected(mat)
       return unless mat
       meta = MetadataStore.read_meta(mat)
