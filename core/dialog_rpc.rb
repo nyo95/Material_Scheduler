@@ -12,7 +12,12 @@ module MSched
           preferences_key: 'material_scheduler_ui',
           width: 1120, height: 720, resizable: true, scrollable: true
         )
-        d.set_file(File.join(MSched::ROOT, 'ui', 'dialog.html'))
+        path = File.join(MSched::ROOT, 'ui', 'material_scheduler.html')
+        if File.exist?(path)
+          d.set_file(path)
+        else
+          d.set_file(File.join(MSched::ROOT, 'ui', 'dialog.html'))
+        end
 
         d.add_action_callback('rpc') do |_ctx, payload|
           begin
