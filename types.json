@@ -1,4 +1,11 @@
 {
-  "HT": "Homogeous Tile",
-  "HPL": "High Pressure Laminated"
+  "HT": "Homogeneous Tile",
+  "HPL": "High Pressure Laminate",
+  "PT": "Paint",
+  "WD": "Wood",
+  "GL": "Glass",
+  "MT": "Metal",
+  "CT": "Ceramic Tile",
+  "MSC": "Miscellaneous",
+  "F": "Fabric"
 }
