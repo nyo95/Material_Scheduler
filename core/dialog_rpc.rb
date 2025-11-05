@@ -73,7 +73,7 @@ module MSched
 
     def self.push_full
       data = {
-        entries: MSched::MetadataStore.entries,
+        entries: MSched::MetadataStore.entries(include_hidden: true, used_only: true),
         kinds: MSched::KindsStore.list,
         logs: MSched::Logger.tail(10),
         selected: @last_selected || nil
@@ -92,7 +92,7 @@ MSched::EventBus.subscribe(:data_changed) { |_p| MSched::DialogRPC.push_full }
 MSched::EventBus.subscribe(:selected_material_info) { |p| MSched::DialogRPC.update_selected(p) if p }
 
 module MSched
-  DialogRPC.on('get_full') { |_a| { entries: MetadataStore.entries, kinds: KindsStore.list } }
+  DialogRPC.on('get_full') { |_a| { entries: MetadataStore.entries(include_hidden: true, used_only: true), kinds: KindsStore.list } }
 
   DialogRPC.on('quick_apply') do |a|
     id = a['id'].to_i
