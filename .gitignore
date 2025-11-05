@@ -29,3 +29,6 @@ types_*.bak.json
 # SketchUp related (no binaries here, but keep for safety)
 *.skp
 *.skb
+
+# Legacy tmp assets
+old_material_scheduler/material_scheduler/tmp/
