@@ -17,9 +17,7 @@
     end
 
     def self.reserved_numbers(prefix)
-      map = MetadataStore.get('reservations',{})||{}
-      arr = (map[prefix]||[]).map{|c| RulesEngine.number_of(c)}.compact
-      arr.uniq
+      [] # Reservations feature disabled on main branch
     end
 
     def self.next_free_from(prefix, start_num, exclude_pid: nil)

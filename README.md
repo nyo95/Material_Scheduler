@@ -1,13 +1,12 @@
 # Material Scheduler (SketchUp Extension)
 
-Material Scheduler is a SketchUp extension that helps you manage and normalize material metadata at scale with a modern HTML UI. It provides quick editing, code allocation, type/kind management, reservations to avoid conflicts, and CSV export.
+Material Scheduler is a SketchUp extension that helps you manage and normalize material metadata at scale with a modern HTML UI. It provides quick editing, code allocation, type/kind management, and CSV export.
 
 ## Features
 - Quick edit material properties (name, brand, type, notes)
 - Apply-only normalization flow to avoid destructive changes
 - Code allocation with simple rules engine
 - Kind/Type management backed by `types.json`
-- Reservations store to prevent conflicting codes
 - CSV export of selected columns
 - Lightweight event bus and logging for traceability
 
