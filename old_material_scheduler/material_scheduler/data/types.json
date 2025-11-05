@@ -1,0 +1,22 @@
+[
+  {
+    "type": "Unassigned",
+    "prefix": ""
+  },
+  {
+    "type": "Paint",
+    "prefix": "PT"
+  },
+  {
+    "type": "HPL",
+    "prefix": "PL"
+  },
+  {
+    "type": "Glass",
+    "prefix": "GL"
+  },
+  {
+    "type": "Marble",
+    "prefix": "MB"
+  }
+]

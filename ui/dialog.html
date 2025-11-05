@@ -1,0 +1,55 @@
+﻿<!doctype html>
+<html>
+<head>
+  <meta charset='utf-8'/>
+  <title>Material Scheduler v0.4.x</title>
+  <link rel='stylesheet' href='css/theme.css'/>
+  <link rel='stylesheet' href='css/table.css'/>
+  <link rel='stylesheet' href='css/forms.css'/>
+</head>
+<body class='ms light'>
+  <header class='ms-header'>
+    <div class='ms-title'>Material Scheduler <span class='muted'>v0.4.x</span></div>
+    <div class='ms-actions'>
+      <button class='btn' data-action='refresh'>Refresh</button>
+      <button class='btn btn-primary' data-action='normalize'>Apply (Bulk)</button>
+      <button class='btn' data-action='export'>Export CSV</button>
+    </div>
+  </header>
+
+  <nav class='ms-tabs'>
+    <button class='tab active' data-tab='quick'>Quick Edit</button>
+    <button class='tab' data-tab='scheduler'>Scheduler</button>
+    <button class='tab' data-tab='kinds'>Kinds</button>
+    <button class='tab' data-tab='reservations'>Reservations</button>
+    <button class='tab' data-tab='samples'>Samples</button>
+    <button class='tab' data-tab='hidden'>Hidden</button>
+  </nav>
+
+  <main class='ms-content'>
+    <section class='tabpanel active' id='tab-quick'></section>
+    <section class='tabpanel' id='tab-scheduler'></section>
+    <section class='tabpanel' id='tab-kinds'></section>
+    <section class='tabpanel' id='tab-reservations'></section>
+    <section class='tabpanel' id='tab-samples'></section>
+    <section class='tabpanel' id='tab-hidden'></section>
+  </div></main>
+
+  <footer class='ms-footer'>
+    <div id='status' class='status'>Ready</div>
+    <div id='log-dot' class='log-dot' title='Logger live'></div>
+  </footer>
+
+  <div id='toast' class='toast'></div>
+
+  <script src='js/app.js'></script>
+  <script src='js/quick.js'></script>
+  <script src='js/scheduler.js'></script>
+  <script src='js/kinds.js'></script>
+  <script src='js/reservations.js'></script>
+  <script src='js/samples.js'></script>
+  <script src='js/hidden.js'></script>
+<script>window.addEventListener('DOMContentLoaded', function(){ if(window.sketchup && sketchup.ready){ sketchup.ready(); } });</script></body>
+</html>
+
+

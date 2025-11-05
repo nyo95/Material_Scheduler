@@ -1,0 +1,31 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.log
+
+# Ruby / Bundler
+.bundle/
+vendor/bundle/
+.yardoc/
+_yardoc/
+coverage/
+.byebug_history
+
+# Node / Frontend (if any UI assets)
+node_modules/
+dist/
+build/
+
+# Temporary and backups
+*.bak
+*.bak.*
+*.tmp
+*~
+types_*.bak.json
+
+# SketchUp related (no binaries here, but keep for safety)
+*.skp
+*.skb

@@ -1,0 +1,76 @@
+﻿/* Material Scheduler – Clean Light Theme */
+:root{
+  --bg:#ffffff; --fg:#0f172a; --muted:#6b7280; --link:#0ea5e9; --border:#e5e7eb;
+  --brand:#2563eb; --brand-2:#3b82f6; --accent:#0ea5e9; --danger:#ef4444;
+  --card:#ffffff; --surface:#f8fafc; --row-alt:#f9fafb;
+  --radius:10px; --radius-sm:8px; --radius-lg:14px;
+  --shadow:0 1px 2px rgba(0,0,0,.06), 0 10px 24px rgba(0,0,0,.05);
+  --pad:10px;
+}
+
+html,body{height:100%}
+body.ms.light{
+  margin:0; background:var(--bg); color:var(--fg);
+  font:13px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+}
+
+/* Header */
+.ms-header{ position:sticky; top:0; z-index:10; background:var(--card);
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 14px; border-bottom:1px solid var(--border);
+}
+.ms-title{ font-weight:600; font-size:14px }
+.muted{ color:var(--muted); font-weight:400 }
+.ms-actions{ display:flex; gap:8px }
+
+/* Tabs */
+.ms-tabs{ position:sticky; top:46px; z-index:9; background:var(--card);
+  display:flex; gap:8px; padding:8px 10px; border-bottom:1px solid var(--border);
+}
+.tab{ border:1px solid var(--border); border-radius:999px; padding:6px 10px; cursor:pointer; background:#f3f4f6; color:#111827 }
+.tab.active{ background:linear-gradient(180deg, var(--brand-2), var(--brand)); color:#fff; border-color:var(--brand-2) }
+
+/* Content */
+.ms-content{ height:calc(100vh - 46px - 42px - 40px); overflow:auto; padding:12px }
+.ms-container{ max-width:1200px; margin:0 auto }
+
+/* Footer */
+.ms-footer{ position:sticky; bottom:0; background:var(--card); color:var(--muted);
+  border-top:1px solid var(--border); padding:6px 10px; display:flex; align-items:center; justify-content:space-between; font-size:12px }
+.log-dot{ width:8px; height:8px; border-radius:50%; background:var(--accent); box-shadow:0 0 10px var(--accent) }
+
+/* Components */
+.btn{ border:1px solid var(--border); background:#f3f4f6; color:#111827; border-radius:var(--radius-sm); padding:6px 10px; cursor:pointer }
+.btn:hover{ border-color:var(--accent) }
+.btn:disabled{ opacity:.6; cursor:not-allowed }
+.btn-primary{ background:linear-gradient(180deg, var(--brand-2), var(--brand)); color:#fff; border-color:var(--brand-2) }
+.btn-ghost{ background:transparent }
+.btn.mini{ padding:3px 6px; font-size:12px; border-radius:6px }
+
+.card{ background:var(--card); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow) }
+.toolbar{ display:flex; align-items:center; gap:8px; margin:8px 0; flex-wrap:wrap }
+.search{ flex:1; border:1px solid var(--border); border-radius:var(--radius-sm); padding:6px 10px }
+.tag{ display:inline-block; border:1px solid var(--border); border-radius:6px; padding:2px 6px; background:#f3f4f6; color:#374151; font-size:12px }
+.pill{ padding:2px 8px; border-radius:999px; border:1px solid var(--border); background:#f3f4f6; color:#374151; font-size:12px }
+
+/* Switch / Chip */
+.chip{ display:inline-flex; align-items:center; gap:6px; padding:2px 8px; background:#f3f4f6; border:1px solid var(--border); border-radius:999px }
+.switch{ position:relative; width:38px; height:20px; background:#f3f4f6; border:1px solid var(--border); border-radius:999px; display:inline-block }
+.switch span{ position:absolute; top:1px; left:1px; width:16px; height:16px; background:#111827; border-radius:50%; transition: all .15s ease }
+.switch.active{ background:var(--brand-2); border-color:var(--brand-2) }
+.switch.active span{ left:20px; background:#fff }
+
+/* Forms */
+.inp{ width:100%; border:1px solid var(--border); border-radius:6px; padding:6px 8px; background:#fff; color:#111827 }
+
+/* Table helpers */
+.tablewrap{ border:1px solid var(--border); border-radius:var(--radius); overflow:auto; background:#fff }
+
+/* Panels */
+.tabpanel{ display:none }
+.tabpanel.active{ display:block }
+
+/* Toast */
+.toast{ position:fixed; right:14px; bottom:14px; padding:10px 12px; border-radius:10px; background:#111827; border:1px solid #0b1224; color:#fff; display:none; z-index:99 }
+.toast.show{ display:block; animation:pop .2s ease-out }
+@keyframes pop{ from{ transform:translateY(6px); opacity:.6 } to{ transform:none; opacity:1 } }

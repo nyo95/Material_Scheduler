@@ -1,0 +1,6 @@
+﻿/* Compact, readable table */
+table{ width:100%; border-collapse:collapse; table-layout:fixed; background:#fff }
+th,td{ padding:8px 10px; border-bottom:1px solid var(--border); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; vertical-align:middle }
+thead th{ position:sticky; top:0; background:var(--surface); z-index:1; text-align:left }
+tbody tr:nth-child(odd){ background:var(--row-alt) }
+tbody tr:hover{ background:#eef2ff }

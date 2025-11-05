@@ -1,0 +1,38 @@
+[
+  {
+    "type": "Paint",
+    "prefix": "PT"
+  },
+  {
+    "type": "HPL",
+    "prefix": "PL"
+  },
+  {
+    "type": "Wood",
+    "prefix": "WD"
+  },
+  {
+    "type": "Glass",
+    "prefix": "GL"
+  },
+  {
+    "type": "Metal",
+    "prefix": "MT"
+  },
+  {
+    "type": "Ceramic Tile",
+    "prefix": "CT"
+  },
+  {
+    "type": "Miscellaneous",
+    "prefix": "MSC"
+  },
+  {
+    "type": "Homogeneous Tile",
+    "prefix": "HT"
+  },
+  {
+    "type": "Fabric",
+    "prefix": "F"
+  }
+]

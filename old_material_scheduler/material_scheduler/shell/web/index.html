@@ -1,0 +1,324 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Material Scheduler (Beta)</title>
+<style>
+:root{--bg:#fff;--fg:#1b1f24;--muted:#5f6b7a;--line:#e9edf2;--header:#f7f9fc}
+html,body{height:100%}body{margin:0;font:13px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--fg);background:var(--bg)}
+header{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:5}
+h1{font-size:16px;margin:0 8px 0 0;font-weight:600}
+button{padding:6px 10px;border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer}
+button:hover{background:#fafcff}
+.tabs{display:flex;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);background:#fff}
+.tab{padding:6px 10px;border-radius:8px;cursor:pointer}.tab.active{background:var(--header)}
+.toolbar{display:flex;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);background:#fff}
+input[type=text],select{padding:6px 8px;border:1px solid var(--line);border-radius:8px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{background:var(--header);position:sticky;top:96px;z-index:3;text-align:left}
+tr.locked input:not([data-field="locked"]), tr.locked select, tr.locked button[data-act="hide"], tr.locked button[data-act="delete"]{ pointer-events:none; opacity:.6; }
+tr.locked{ background:#f8f9fa; }
+.thumb{width:40px;height:28px;border-radius:6px;background:#f3f4f6;border:1px solid var(--line); background-size:cover; background-position:center}
+footer{padding:8px 12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);display:flex;justify-content:space-between;background:#fff;position:sticky;bottom:0}
+.hidden{display:none}
+
+/* --- Samples highlight received --- */
+tr.sample-received { background:#e8f7e8; }
+tr.sample-received td { border-bottom-color:#d7eed7; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Material Scheduler (Beta)</h1>
+  <button onclick="sketchup.export_csv()">Export CSV</button>
+  <button onclick="sketchup.refresh()">Refresh</button>
+</header>
+
+<div class="tabs">
+  <div class="tab active" data-tab="scheduler">Scheduler</div>
+  <div class="tab" data-tab="kinds">Kinds</div>
+  <div class="tab" data-tab="samples">Samples</div>
+  <div class="tab" data-tab="hidden">Hidden</div>
+</div>
+
+<section id="scheduler">
+  <div class="toolbar">
+    <input id="q" type="text" placeholder="Search code/brand/notes..." oninput="render()">
+    <select id="flt" onchange="render()"><option value="">All types</option></select>
+    <select id="sort" onchange="render()">
+      <option value="code">Sort by Code</option>
+      <option value="type">Sort by Type</option>
+    </select>
+  </div>
+  <table>
+    <thead><tr>
+      <th></th><th>Code</th><th>Thumbnail</th><th>Material Type</th><th>Brand (ex.)</th><th>Type</th><th>Notes</th><th>Locked</th><th>Sample</th><th>Hide</th>
+    </tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</section>
+
+<section id="kinds" class="hidden">
+  <div style="padding:8px 12px;color:#566;font-size:12px">
+    Master bersifat global. Edit di sini akan menulis <b>types.json</b> dan resync model.
+  </div>
+  <div style="display:flex;gap:8px;padding:8px 12px;">
+    <button onclick="addType()">Add</button>
+    <button onclick="saveTypes()">Save</button>
+  </div>
+  <table>
+    <thead><tr><th>Material Type</th><th>Prefix</th><th></th></tr></thead>
+    <tbody id="type_rows"></tbody>
+  </table>
+</section>
+
+<section id="samples" class="hidden">
+  <table>
+    <thead>
+      <tr>
+        <th>Code</th>
+        <th>Brand</th>
+        <th>Type</th>
+        <th>Notes</th>
+        <th>Received</th>
+      </tr>
+    </thead>
+    <tbody id="sample_rows"></tbody>
+  </table>
+</section>
+
+<section id="hidden" class="hidden">
+  <table><thead><tr><th>Code</th><th>Brand</th><th>Type</th><th>Notes</th><th>Unhide</th></tr></thead>
+  <tbody id="hidden_rows"></tbody></table>
+</section>
+
+<footer><div id="status">Ready.</div><div id="counts"></div></footer>
+
+<script>
+/* ======== STATE ======== */
+window.model = { rows:[], hidden_rows:[], types:[], meta:{status:'Ready.'} };
+
+window.app = {
+  setData: function (snap){
+    window.model = snap || window.model;
+    setTypes(window.model.types||[]);
+    render();
+  },
+  setTypes: function (types){
+    setTypes(types||[]);
+    render();
+  }
+};
+
+function esc(s){return (''+s).replace(/[&<>"]/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));}
+
+function setTypes(types){
+  model.types = types||[];
+  const flt = document.getElementById('flt');
+  const cur = flt.value;
+  flt.innerHTML = '<option value="">All types</option>' + model.types.map(t=>`<option>${t.type}</option>`).join('');
+  if ([...flt.options].some(o=>o.value===cur)) flt.value = cur;
+
+  document.getElementById('type_rows').innerHTML = model.types.map(t=>(
+    `<tr><td><input type="text" class="t_type" value="${esc(t.type)}"></td>`+
+    `<td><input type="text" class="t_prefix" value="${esc((t.prefix||'').toUpperCase())}"></td>`+
+    `<td><button class="rm">Delete</button></td></tr>`
+  )).join('');
+  [...document.querySelectorAll('#type_rows .rm')].forEach(btn=>btn.addEventListener('click', ()=> btn.closest('tr').remove()));
+}
+
+function typeOptions(sel){
+  let opts = (model.types||[]).map(t=>`<option${t.type===sel?' selected':''}>${t.type}</option>`);
+  if (!sel || !opts.some(o=>o.includes('selected'))) opts.unshift('<option selected>Unassigned</option>');
+  else opts.unshift('<option>Unassigned</option>');
+  return opts.join('');
+}
+
+function codeSort(a,b){
+  const A=(a.code||'').split('-'), B=(b.code||'').split('-');
+  if (A[0]!==B[0]) return A[0].localeCompare(B[0]);
+  return (parseInt(A[1]||'0') - parseInt(B[1]||'0'));
+}
+
+function matchRow(r,q){
+  if (!q) return true; q=q.toLowerCase();
+  return (r.code||'').toLowerCase().includes(q) || (r.brand||'').toLowerCase().includes(q) || (r.notes||'').toLowerCase().includes(q);
+}
+
+/* ======== RENDER ======== */
+function rowHtml(r){
+  const dis = r.locked ? 'disabled' : '';
+  const thumb = r.thumb ? `style="background-image:url('${r.thumb}');"` : '';
+  return `
+    <td class="icon"><button data-act="delete" data-id="${r.id}" ${dis}>🗑️</button></td>
+    <td><input type="text" value="${esc(r.code||'')}" data-field="code" data-id="${r.id}" ${dis}></td>
+    <td><div class="thumb" ${thumb}></div></td>
+    <td><select data-field="type" data-id="${r.id}" ${dis}>${typeOptions(r.type)}</select></td>
+    <td><input type="text" value="${esc(r.brand||'')}" data-field="brand" data-id="${r.id}" ${dis}></td>
+    <td><input type="text" value="${esc(r.subtype||'')}" data-field="subtype" data-id="${r.id}" ${dis}></td>
+    <td><input type="text" value="${esc(r.notes||'')}" data-field="notes" data-id="${r.id}" ${dis}></td>
+    <td style="text-align:center"><input type="checkbox" data-field="locked" data-id="${r.id}" ${r.locked?'checked':''}></td>
+    <td style="text-align:center"><input type="checkbox" data-field="sample" data-id="${r.id}" ${dis} ${r.sample?'checked':''}></td>
+    <td><button data-act="hide" data-id="${r.id}" ${dis}>Hide</button></td>
+  `;
+}
+
+function render(){
+  const q = document.getElementById('q').value;
+  const flt = document.getElementById('flt').value;
+  const sort = document.getElementById('sort').value;
+
+  // visible
+  let rs = (model.rows||[]).filter(r=>matchRow(r,q)).filter(r=>!flt || r.type===flt);
+  rs.sort(sort==='type' ? (a,b)=> (a.type||'').localeCompare(b.type||'') || codeSort(a,b) : codeSort);
+  const tb = document.getElementById('rows'); tb.innerHTML = '';
+  rs.forEach(r=>{
+    const tr = document.createElement('tr');
+    if (r.locked) tr.classList.add('locked');
+    tr.dataset.id = r.id;
+    tr.innerHTML = rowHtml(r);
+    tb.appendChild(tr);
+  });
+  wireRows();
+
+  // === Samples (visible + hidden) ===
+  const allRows = [].concat(model.rows || [], model.hidden_rows || []);
+  const S = allRows.filter(r => r.sample);
+
+  const sTbody = document.getElementById('sample_rows');
+  sTbody.innerHTML = S.map(s => {
+    const rowCls = s.sample_received ? 'sample-received' : '';
+    return `
+      <tr class="${rowCls}" data-id="${s.id}">
+        <td>${esc(s.code || '')}</td>
+        <td>${esc(s.brand || '')}</td>
+        <td>${esc(s.type || '')}</td>
+        <td><input type="text" data-field="sample_notes" data-id="${s.id}" value="${esc(s.sample_notes || '')}"></td>
+        <td style="text-align:center">
+          <input type="checkbox" data-field="sample_received" data-id="${s.id}" ${s.sample_received?'checked':''}>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  // wire Samples fields
+  [...document.querySelectorAll('#sample_rows input[data-field="sample_notes"]')].forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      const id = parseInt(inp.getAttribute('data-id'),10);
+      const val = inp.value;
+      sketchup.apply_change(JSON.stringify({ id:id, field:'sample_notes', value:val }));
+      // lokal update
+      const upd = (arr)=>{ const i = arr.findIndex(x=>x.id===id); if(i>=0) arr[i].sample_notes = val; };
+      upd(model.rows||[]); upd(model.hidden_rows||[]);
+    });
+  });
+  [...document.querySelectorAll('#sample_rows input[data-field="sample_received"]')].forEach(cb=>{
+    cb.addEventListener('change', ()=>{
+      const id = parseInt(cb.getAttribute('data-id'),10);
+      const val = cb.checked;
+      sketchup.apply_change(JSON.stringify({ id:id, field:'sample_received', value:val }));
+      // lokal update + highlight
+      const upd = (arr)=>{ const i = arr.findIndex(x=>x.id===id); if(i>=0) arr[i].sample_received = val; };
+      upd(model.rows||[]); upd(model.hidden_rows||[]);
+      const tr = cb.closest('tr');
+      if (tr) { tr.classList.toggle('sample-received', !!val); }
+    });
+  });
+
+  // hidden
+  const H = model.hidden_rows || [];
+  document.getElementById('hidden_rows').innerHTML = H.map(h=>
+    `<tr><td>${esc(h.code)}</td><td>${esc(h.brand||'')}</td><td>${esc(h.type||'')}</td><td>${esc(h.notes||'')}</td><td><button data-act="unhide" data-id="${h.id}">Unhide</button></td></tr>`
+  ).join('');
+  [...document.querySelectorAll('#hidden_rows [data-act="unhide"]')].forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = +btn.getAttribute('data-id');
+      sketchup.apply_change(JSON.stringify({id:id, field:'unhide'}));
+      // local optimistic move
+      const i = model.hidden_rows.findIndex(x=>x.id===id);
+      if (i>=0){ const row = model.hidden_rows.splice(i,1)[0]; row.hidden=false; model.rows.push(row); render(); }
+    });
+  });
+
+  // footer
+  const receivedCount = S.filter(s=>s.sample_received).length;
+  document.getElementById('status').textContent = (model.meta && model.meta.status) || 'Ready.';
+  document.getElementById('counts').textContent =
+    `${(model.rows||[]).length} visible • ${(model.hidden_rows||[]).length} hidden • ${S.length} samples • ${receivedCount} received`;
+}
+
+function wireRows(){
+  document.querySelectorAll('#rows input, #rows select').forEach(el=>{
+    el.addEventListener('change', ()=>{
+      const field = el.getAttribute('data-field');
+      const id = parseInt(el.getAttribute('data-id'),10);
+      const value = (el.type==='checkbox') ? el.checked : el.value;
+      sketchup.apply_change(JSON.stringify({id:id, field:field, value:value}));
+
+      // instant local updates
+      const idx = (model.rows||[]).findIndex(x=>x.id===id);
+      if (idx>=0){
+        const row = model.rows[idx];
+        if (field==='locked'){ row.locked = !!value; render(); }
+        if (field==='sample'){ row.sample = !!value; render(); }
+        if (field==='brand'){ row.brand = value; }
+        if (field==='subtype'){ row.subtype = value; }
+        if (field==='notes'){ row.notes = value; }
+        if (field==='type'){ row.type = value; }
+        if (field==='code'){ row.code = (''+value).toUpperCase().replace(/[\s_]+/g,'-'); }
+      }
+    });
+  });
+
+  document.querySelectorAll('#rows [data-act="delete"]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = parseInt(btn.getAttribute('data-id'),10);
+      sketchup.apply_change(JSON.stringify({id:id, field:'delete'}));
+      const i = model.rows.findIndex(x=>x.id===id);
+      if (i>=0){ model.rows.splice(i,1); render(); }
+    });
+  });
+
+  document.querySelectorAll('#rows [data-act="hide"]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const id = parseInt(btn.getAttribute('data-id'),10);
+      sketchup.apply_change(JSON.stringify({id:id, field:'hide'}));
+      const i = model.rows.findIndex(x=>x.id===id);
+      if (i>=0){ const row = model.rows.splice(i,1)[0]; row.hidden=true; model.hidden_rows.push(row); render(); }
+    });
+  });
+}
+
+function addType(){
+  const tb = document.getElementById('type_rows');
+  const tr = document.createElement('tr');
+  tr.innerHTML = '<td><input type="text" class="t_type"></td><td><input type="text" class="t_prefix"></td><td><button class="rm">Delete</button></td>';
+  tb.appendChild(tr);
+  tr.querySelector('.rm').addEventListener('click', ()=> tr.remove());
+}
+
+function saveTypes(){
+  const rows = [].map.call(document.querySelectorAll('#type_rows tr'), tr=>({
+    type: (tr.querySelector('.t_type').value||'').trim(),
+    prefix: (tr.querySelector('.t_prefix').value||'').trim().toUpperCase()
+  }));
+  sketchup.save_types(JSON.stringify(rows));
+  model.types = rows; render(); // local update
+}
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab=>{
+  tab.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    tab.classList.add('active');
+    ['scheduler','kinds','samples','hidden'].forEach(id=>{
+      document.getElementById(id).classList.toggle('hidden', id!==tab.getAttribute('data-tab'));
+    });
+  });
+});
+
+window.addEventListener('DOMContentLoaded', ()=>{ if (window.sketchup && sketchup.ready) sketchup.ready(); });
+</script>
+</body>
+</html>
