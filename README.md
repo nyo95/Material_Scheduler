@@ -32,7 +32,7 @@ Material Scheduler is a SketchUp extension that helps you manage and normalize m
    ext = SketchupExtension.new('Material Scheduler', 'material_scheduler/init')
    ext.version     = MSched::VERSION
    ext.creator     = 'Material Scheduler'
-   ext.description = 'Material Scheduler v0.4.x – Quick Edit, apply-only normalization, reservations, modern UI.'
+   ext.description = 'Material Scheduler v0.4.x – Quick Edit, apply-only normalization, modern UI.'
    Sketchup.register_extension(ext, true)
    ```
 
@@ -50,7 +50,7 @@ Material Scheduler is a SketchUp extension that helps you manage and normalize m
 ## Project Structure
 - `init.rb` — extension bootstrap (requires core and features, starts services)
 - `core/` — dialog bridge (RPC), logging, event bus, metadata store, sync, undo
-- `features/` — kinds store, reservations, rules engine, code allocator, CSV exporter
+- `features/` — kinds store, rules engine, code allocator, CSV exporter
 - `ui/` — HTML/JS/CSS for the dialog
 - `types.json` — type/kind definitions saved by the UI
 
