@@ -5,7 +5,9 @@
 
     def self.used_numbers(prefix, exclude_pid: nil)
       nums = []
+      used_ids = MetadataStore.used_material_ids
       Sketchup.active_model.materials.each do |m|
+        next unless used_ids.include?(m.persistent_id)
         next if exclude_pid && m.persistent_id == exclude_pid
         meta = MetadataStore.read_meta(m)
         eff  = meta['code']
@@ -13,9 +15,9 @@
         n = RulesEngine.number_of(eff)
         nums << n if n and n>0
       end
-      # Also consider materials whose name already matches the code pattern,
-      # to avoid rename conflicts in models that have named but untagged materials.
+      # Also consider used materials whose name already matches the code pattern
       Sketchup.active_model.materials.each do |m|
+        next unless used_ids.include?(m.persistent_id)
         next if exclude_pid && m.persistent_id == exclude_pid
         name = (m.name || m.display_name).to_s
         if name.start_with?("#{prefix}-")

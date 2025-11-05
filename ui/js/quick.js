@@ -31,7 +31,7 @@
           <div class="notes-col">
             <div class="muted">Notes</div>
             <textarea id="q_notes" class="inp quick-notes" rows="4" ${disabled}>${(p.notes||'')}</textarea>
-            <div class="notes-actions">${chip('locked',!!p.locked)} ${chip('sample',!!p.sample)} <button class="btn btn-primary" id="q_apply">Apply</button></div>
+            <div class="notes-actions">${chip('locked',!!p.locked)} ${chip('sample',!!p.sample)} ${chip('hidden',!!p.hidden)} <button class="btn btn-primary" id="q_apply">Apply</button></div>
           </div>
         </div>
       </div>`;
@@ -53,7 +53,7 @@
     // Flags toggles
     (el.querySelectorAll('.chip')||[]).forEach(chip=>{
       const key=chip.getAttribute('data-k'); const sw=chip.querySelector('.switch');
-      chip.addEventListener('click',()=>{ const on=!sw.classList.contains('active'); sw.classList.toggle('active'); const flags={}; flags[key]=on; __rpc('set_flags',{ ids:[p.id], flags:flags }); });
+      chip.addEventListener('click',()=>{ if(key==='hidden' && p.locked){ return; } const on=!sw.classList.contains('active'); sw.classList.toggle('active'); const flags={}; flags[key]=on; __rpc('set_flags',{ ids:[p.id], flags:flags }); });
     });
   }
   return { render: render, onSelected: onSelected };

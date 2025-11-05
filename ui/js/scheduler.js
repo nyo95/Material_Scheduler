@@ -52,6 +52,15 @@
   function markDirty(id, patch){ if(!State.pending) State.pending={}; const cur=State.pending[id]||{}; State.pending[id]=Object.assign({},cur,patch||{}); const tr=document.querySelector(`tr[data-id="${id}"]`); if(tr){ tr.classList.add('dirty'); const ap=tr.querySelector('.t_apply'), rv=tr.querySelector('.t_revert'); if(ap) ap.removeAttribute('disabled'); if(rv) rv.removeAttribute('disabled'); } }
   function wireRows(){ $$('#sch_rows tr').forEach(tr=>{
     const id=parseInt(tr.getAttribute('data-id'),10);
+    // Drag & drop swap on code cell
+    const codeCell = tr.querySelector('.td-code');
+    if(codeCell){
+      tr.setAttribute('draggable','true');
+      tr.addEventListener('dragstart',ev=>{ ev.dataTransfer.setData('text/plain', String(id)); ev.dataTransfer.effectAllowed = 'move'; tr.classList.add('dragging'); });
+      tr.addEventListener('dragend',()=>{ tr.classList.remove('dragging'); });
+      tr.addEventListener('dragover',ev=>{ ev.preventDefault(); ev.dataTransfer.dropEffect = 'move'; });
+      tr.addEventListener('drop',ev=>{ ev.preventDefault(); const src = parseInt(ev.dataTransfer.getData('text/plain')||'0',10); const dst = id; if(src && dst && src!==dst){ __rpc('swap_codes',{ a:src, b:dst }); } });
+    }
     const del = tr.querySelector('.t_delete'); if(del){ del.addEventListener('click',()=>__rpc('delete_material',{id:id})); }
     tr.querySelectorAll('.chip').forEach(chip=>{
       const key=chip.getAttribute('data-k'); const sw=chip.querySelector('.switch');

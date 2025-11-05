@@ -147,13 +147,38 @@ module MSched
       ids.each do |pid|
         m = MetadataStore.find_material(pid); next unless m
         meta = MetadataStore.read_meta(m)
-        if meta['locked'] && (flags.keys - ['locked']).any?
+        # When locked: allow toggling 'sample' only; block others
+        if meta['locked'] && (flags.keys - ['locked','sample']).any?
           next
         end
         MetadataStore.write_meta(m, meta.merge(flags)); changed << pid
       end
     end
     EventBus.publish(:data_changed, {}); { ok: true, ids: changed }
+  end
+
+  DialogRPC.on('swap_codes') do |a|
+    ida = a['a'].to_i; idb = a['b'].to_i
+    m1 = MetadataStore.find_material(ida); m2 = MetadataStore.find_material(idb)
+    raise 'NOT_FOUND' unless m1 && m2
+    meta1 = MetadataStore.read_meta(m1); meta2 = MetadataStore.read_meta(m2)
+    c1 = meta1['code'] || (RulesEngine.canonical(m1.display_name) rescue nil)
+    c2 = meta2['code'] || (RulesEngine.canonical(m2.display_name) rescue nil)
+    raise 'MISSING_CODE' unless c1 && c2
+    t1 = c1.split('-',2)[0]; t2 = c2.split('-',2)[0]
+    Undo.wrap('Swap Codes') do
+      # Use a temp unique name to avoid collision
+      tmp = "__swap_#{Time.now.to_i}_#{rand(100000)}"
+      m1.name = tmp
+      MetadataStore.write_meta(m1, meta1.merge({ 'code'=>nil }))
+      # Assign code1 to m2
+      m2.name = c1
+      MetadataStore.write_meta(m2, meta2.merge({ 'code'=>c1, 'type'=>t1 }))
+      # Assign code2 to m1
+      m1.name = c2
+      MetadataStore.write_meta(m1, meta1.merge({ 'code'=>c2, 'type'=>t2 }))
+    end
+    EventBus.publish(:data_changed, {}); { ok: true }
   end
 
   DialogRPC.on('delete_material') do |a|
