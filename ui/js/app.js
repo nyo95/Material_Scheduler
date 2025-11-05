@@ -14,6 +14,19 @@
   function setStatus(s){ statusEl.textContent=s; } window.__setStatus=setStatus;
   function toast(msg){ const t=document.querySelector('#toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1400);} window.__toast=toast;
   function rpc(name,args){ if(window.sketchup&&window.sketchup.rpc){ window.sketchup.rpc(JSON.stringify({name,args})); } else { console.warn('No SU bridge'); } } window.__rpc=rpc;
+  // Debounced flag setter per row (batch small)
+  (function(){
+    const queue = {}; let timer=null; const FLUSH_MS=200;
+    function flush(){
+      Object.keys(queue).forEach(function(id){
+        const flags = queue[id]; delete queue[id];
+        try{ if(window.sketchup&&window.sketchup.rpc){ window.sketchup.rpc(JSON.stringify({name:'set_flags', args:{ ids:[parseInt(id,10)], flags: flags }})); } }catch(e){}
+      });
+      timer=null;
+    }
+    function setFlag(id,key,val){ if(!queue[id]) queue[id]={}; queue[id][key]=val; if(timer) clearTimeout(timer); timer=setTimeout(flush,FLUSH_MS); }
+    window.__setFlag=setFlag;
+  })();
 
   function updateStatusBar(){
     const rows = State.rows || [];
@@ -36,6 +49,13 @@
   window.__ms_rpc_resolve=function(p){
     var name = p && p.name;
     if(name==='get_full'){ if(p.result){ window.__ms_receive_full(p.result); } return; }
+    if(name==='normalize_preview'){
+      var changes=(p.result && p.result.changes)||[];
+      if(!changes.length){ __toast('Already normalized'); return; }
+      var ok = confirm('Normalize will update '+changes.length+' items. Proceed?');
+      if(ok){ rpc('normalize_all',{}); }
+      return;
+    }
     if(name==='quick_apply'){
       if(p.result && p.result.updated){ window.__quickSel = p.result.updated; Quick.render(); }
       rpc('get_full',{}); return;
@@ -48,7 +68,7 @@
   };
   window.__ms_rpc_reject=function(p){ __toast('Error: '+p.error); console.error(p.error); };
   document.querySelector('[data-action="refresh"]').addEventListener('click',function(){ rpc('get_full',{}); });
-  document.querySelector('[data-action="normalize"]').addEventListener('click',function(){ rpc('normalize_all',{}); });
+  document.querySelector('[data-action="normalize"]').addEventListener('click',function(){ rpc('normalize_preview',{}); });
   document.querySelector('[data-action="export"]').addEventListener('click',function(){ var cols=Scheduler.currentColumns(); rpc('export_csv',{ cols: cols }); });
   window.State={ rows:[], kinds:{}, pending:{}, get visibleRows(){return this.rows.filter(r=>!r.hidden)}, get sampleRows(){return this.rows.filter(r=>r.sample&&!r.hidden)}, get hiddenRows(){return this.rows.filter(r=>r.hidden)} };
   updateBulkVisibility('quick');

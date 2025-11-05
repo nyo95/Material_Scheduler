@@ -94,9 +94,10 @@
             n += 1 while occupied.include?(n)
             code = RulesEngine.make_code(prefix, n)
             unless (meta['code'] == code) && (m.name == code)
+              old = (meta['code'] || m.name)
               MetadataStore.write_meta(m, { 'code' => code, 'type' => prefix })
               m.name = code
-              changed << { id: m.persistent_id, code: code }
+              changed << { id: m.persistent_id, from: old, to: code }
             end
             occupied << n
           end
@@ -105,6 +106,42 @@
       EventBus.publish(:data_changed, {})
       MSched::Logger.info(:normalize_done, changed: changed.size)
       { changed: changed }
+    end
+
+    def self.normalize_preview
+      used_ids = MetadataStore.used_material_ids
+      plan = []
+      groups = Hash.new { |h,k| h[k] = [] }
+      Sketchup.active_model.materials.each do |m|
+        next unless used_ids.include?(m.persistent_id)
+        meta = MetadataStore.read_meta(m)
+        pref = meta['type'] || (canonical(meta['code'] || m.display_name)&.split('-',2)&.first)
+        groups[pref] << m if pref && pref != ''
+      end
+      groups.each do |prefix, mats|
+        mats.sort_by! { |m| m.persistent_id }
+        occupied = []
+        mats.each do |m|
+          meta = MetadataStore.read_meta(m)
+          if meta['locked'] || meta['hidden']
+            n = number_of(meta['code'] || m.display_name)
+            occupied << n if n && n > 0
+          end
+        end
+        mats.each do |m|
+          meta = MetadataStore.read_meta(m)
+          next if meta['locked'] || meta['hidden']
+          n = 1
+          n += 1 while occupied.include?(n)
+          code = RulesEngine.make_code(prefix, n)
+          cur = meta['code'] || m.display_name
+          if cur != code
+            plan << { id: m.persistent_id, from: cur, to: code }
+          end
+          occupied << n
+        end
+      end
+      { changes: plan }
     end
   end
 end

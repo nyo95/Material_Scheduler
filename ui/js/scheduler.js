@@ -42,8 +42,8 @@
     `</tr>`;
   }
   function flagHtml(r){
-    function chip(lbl,on){ return `<span class="chip" data-k="${lbl}">${lbl}: <span class="switch ${on?'active':''}"><span></span></span></span>` }
-    return chip('locked', !!r.locked) + ' ' + chip('sample', !!r.sample) + ' ' + chip('hidden', !!r.hidden) + ' ' + chip('received', !!r.sample_received);
+    function ico(id,on,title){ return `<button class=\"flag ${on?'on':''}\" data-k=\"${id}\" title=\"${title}\"><svg width=\"16\" height=\"16\"><use href=\"#${id==='locked'?'ico-lock':id==='hidden'?'ico-eye':id==='sample'?'ico-flask':'ico-check'}\"/></svg></button>` }
+    return ico('locked',!!r.locked,'Locked')+ ' ' + ico('sample',!!r.sample,'Sample') + ' ' + ico('hidden',!!r.hidden,'Hidden') + ' ' + ico('received',!!r.sample_received,'Received');
   }
   function typeOptionsLabel(sel){ const kinds=State.kinds||{}; const arr=['<option value="">(Unassigned)</option>'].concat(Object.keys(kinds).sort().map(k=>`<option value="${k}" ${sel===k?'selected':''}>${kinds[k]||k}</option>`)); return arr.join(''); }
   function currentColumns(){ return ['code','type','brand','subtype','notes','locked','sample','hidden','name','kind_label']; }
@@ -64,9 +64,9 @@
     tr.addEventListener('dragleave',()=>{ tr.classList.remove('drop-target'); });
     tr.addEventListener('drop',ev=>{ ev.preventDefault(); tr.classList.remove('drop-target'); const src = parseInt(ev.dataTransfer.getData('text/plain')||'0',10); const dst = id; if(!src||!dst||src===dst){return;} const srcTr=document.querySelector(`tr[data-id="${src}"]`); const typeOk = srcTr && (srcTr.getAttribute('data-type')===tr.getAttribute('data-type')); const dstLocked = (tr.getAttribute('data-locked')==='1'); const srcLocked = srcTr && (srcTr.getAttribute('data-locked')==='1'); if(srcLocked || dstLocked){ __toast('Cannot swap: locked'); return; } if(!typeOk){ __toast('Types must match'); return; } __rpc('swap_codes',{ a:src, b:dst }); });
     const del = tr.querySelector('.t_delete'); if(del){ del.addEventListener('click',()=>__rpc('delete_material',{id:id})); }
-    tr.querySelectorAll('.chip').forEach(chip=>{
-      const key=chip.getAttribute('data-k'); const sw=chip.querySelector('.switch');
-      chip.addEventListener('click',()=>{ const on=!sw.classList.contains('active'); sw.classList.toggle('active'); const flags={}; flags[key]=on; __rpc('set_flags',{ ids:[id], flags:flags }); });
+    tr.querySelectorAll('.flag').forEach(btn=>{
+      const key=btn.getAttribute('data-k');
+      btn.addEventListener('click',()=>{ const locked = (tr.getAttribute('data-locked')==='1'); if(locked && key!=='sample'){ __toast('Locked: only sample allowed'); return; } const on=!btn.classList.contains('on'); btn.classList.toggle('on'); if(window.__setFlag){ window.__setFlag(id,key,on); } else { const flags={}; flags[key]=on; __rpc('set_flags',{ ids:[id], flags:flags }); } });
     });
     const tsel=tr.querySelector('.t_type'); if(tsel){ tsel.addEventListener('change',()=>{ const prefix=tsel.value||''; markDirty(id,{ prefix:prefix }); }); }
     const tbrand=tr.querySelector('.t_brand'); if(tbrand){ tbrand.addEventListener('input',()=>{ markDirty(id,{ brand:tbrand.value }); }); }

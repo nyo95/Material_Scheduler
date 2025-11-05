@@ -212,6 +212,7 @@ module MSched
 
   DialogRPC.on('kinds_save') { |a| KindsStore.save(a['kinds'] || {}); { ok: true } }
   DialogRPC.on('export_csv') { |a| cols = a['cols'] || []; rows = MetadataStore.entries; csv = CSVExporter.export(rows, cols); { csv: csv } }
+  DialogRPC.on('normalize_preview') { |_a| MSched::CodeAllocator.normalize_preview }
 
   DialogRPC.on('purge_unused_materials') do |_a|
     used = MetadataStore.used_material_ids

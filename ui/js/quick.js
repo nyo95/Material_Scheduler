@@ -31,7 +31,13 @@
           <div class="notes-col">
             <div class="muted">Notes</div>
             <textarea id="q_notes" class="inp quick-notes" rows="4" ${disabled}>${(p.notes||'')}</textarea>
-            <div class="notes-actions">${chip('locked',!!p.locked)} ${chip('sample',!!p.sample)} ${chip('hidden',!!p.hidden)} <button class="btn btn-primary btn-lg" id="q_apply" title="Apply changes"><svg width="16" height="16" style="margin-right:6px"><use href="#ico-apply"/></svg>Apply</button></div>
+            <div class="notes-actions">
+              <button class="flag ${p.locked?'on':''}" data-k="locked" title="Locked"><svg width="16" height="16"><use href="#ico-lock"/></svg></button>
+              <button class="flag ${p.sample?'on':''}" data-k="sample" title="Sample"><svg width="16" height="16"><use href="#ico-flask"/></svg></button>
+              <button class="flag ${p.hidden?'on':''}" data-k="hidden" title="Hidden"><svg width="16" height="16"><use href="#ico-eye"/></svg></button>
+              <button class="flag ${p.sample_received?'on':''}" data-k="received" title="Received"><svg width="16" height="16"><use href="#ico-check"/></svg></button>
+              <button class="btn btn-primary btn-lg" id="q_apply" title="Apply changes"><svg width="16" height="16" style="margin-right:6px"><use href="#ico-apply"/></svg>Apply</button>
+            </div>
           </div>
         </div>
       </div>`;
@@ -51,9 +57,9 @@
     document.getElementById('q_apply').onclick = apply;
     ['q_brand','q_notes','q_subtype'].forEach(id=>{ const el=document.getElementById(id); if(el){ el.addEventListener('keydown',e=>{ if(e.key==='Enter'){ apply(); } }); }});
     // Flags toggles
-    (el.querySelectorAll('.chip')||[]).forEach(chip=>{
-      const key=chip.getAttribute('data-k'); const sw=chip.querySelector('.switch');
-      chip.addEventListener('click',()=>{ if(key==='hidden' && p.locked){ return; } const on=!sw.classList.contains('active'); sw.classList.toggle('active'); const flags={}; flags[key]=on; __rpc('set_flags',{ ids:[p.id], flags:flags }); });
+    (el.querySelectorAll('.flag')||[]).forEach(btn=>{
+      const key=btn.getAttribute('data-k');
+      btn.addEventListener('click',()=>{ if(p.locked && key!=='sample'){ __toast('Locked: only sample allowed'); return; } const on=!btn.classList.contains('on'); btn.classList.toggle('on'); if(window.__setFlag){ window.__setFlag(p.id,key,on); } else { const flags={}; flags[key]=on; __rpc('set_flags',{ ids:[p.id], flags:flags }); } });
     });
   }
   return { render: render, onSelected: onSelected };
