@@ -13,6 +13,16 @@
         n = RulesEngine.number_of(eff)
         nums << n if n and n>0
       end
+      # Also consider materials whose name already matches the code pattern,
+      # to avoid rename conflicts in models that have named but untagged materials.
+      Sketchup.active_model.materials.each do |m|
+        next if exclude_pid && m.persistent_id == exclude_pid
+        name = (m.name || m.display_name).to_s
+        if name.start_with?("#{prefix}-")
+          n = RulesEngine.number_of(name)
+          nums << n if n && n > 0
+        end
+      end
       nums.uniq
     end
 
@@ -33,8 +43,17 @@
     def self.set_code_for(mat, prefix, number)
       code = RulesEngine.make_code(prefix, number)
       MetadataStore.write_meta(mat, { 'type'=>prefix, 'code'=>code })
-      mat.name = code
-      code
+      # Guard against name conflicts by bumping number until rename succeeds
+      n = number.to_i
+      loop do
+        begin
+          mat.name = RulesEngine.make_code(prefix, n)
+          MetadataStore.write_meta(mat, { 'type'=>prefix, 'code'=>RulesEngine.make_code(prefix, n) })
+          return RulesEngine.make_code(prefix, n)
+        rescue => _e
+          n += 1
+        end
+      end
     end
 
     def self.allocate_from_number(mat, prefix, number)

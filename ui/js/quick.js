@@ -14,7 +14,7 @@
     }
     return `
       <div class="tablewrap" style="padding:10px">
-        <div style="display:grid; grid-template-columns: 120px 1fr; gap:16px; align-items:start">
+        <div style="display:grid; grid-template-columns: 140px 1fr; gap:24px; align-items:start">
           <div class="thumb" style="width:110px; height:110px; border-radius:6px; border:1px solid #e5e7eb; ${swStyle}"></div>
           <div style="display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap">
             <div><div class="muted">Current Code</div><div class="tag" id="q_code">${p.code||''}</div></div>

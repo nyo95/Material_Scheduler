@@ -51,13 +51,16 @@
     def self.material_selected(mat)
       return unless mat
       meta = MetadataStore.read_meta(mat)
+      code = meta['code']
+      begin; code ||= MSched::RulesEngine.canonical(mat.display_name); rescue; end
+      type = meta['type'] || (code && code.split('-')[0])
       sw = swatch_for(mat)
       payload = {
         id: mat.persistent_id,
         name: mat.display_name,
-        code: meta['code'],
-        type: meta['type'],
-        number: (meta['code'] && meta['code'].split('-')[1]&.to_i),
+        code: code,
+        type: type,
+        number: (code && code.split('-')[1]&.to_i),
         brand: meta['brand'],
         notes: meta['notes'],
         sample: !!meta['sample'],
@@ -79,13 +82,16 @@
         end
         if mat
           meta = MetadataStore.read_meta(mat)
+          code = meta['code']
+          begin; code ||= MSched::RulesEngine.canonical(mat.display_name); rescue; end
+          type = meta['type'] || (code && code.split('-')[0])
           sw = swatch_for(mat)
           payload = {
             id: mat.persistent_id,
             name: mat.display_name,
-            code: meta['code'],
-            type: meta['type'],
-            number: (meta['code'] && meta['code'].split('-')[1]&.to_i),
+            code: code,
+            type: type,
+            number: (code && code.split('-')[1]&.to_i),
             brand: meta['brand'],
             notes: meta['notes'],
             sample: !!meta['sample'],

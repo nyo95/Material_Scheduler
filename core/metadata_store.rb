@@ -7,7 +7,18 @@
     def self.read_meta(mat)
       return {} unless mat && mat.valid?
       key = 'mat_%d' % mat.persistent_id
-      model.get_attribute(NS, key, {}) || {}
+      h = model.get_attribute(NS, key, {}) || {}
+      # Also read from material attribute dictionary 'ms' for robustness
+      begin
+        d = mat.attribute_dictionary('ms', false)
+        if d
+          d.each_pair do |k,v|
+            h[k.to_s] = v
+          end
+        end
+      rescue
+      end
+      h
     end
     def self.write_meta(mat, patch)
       return unless mat && mat.valid? && patch.is_a?(Hash)
@@ -38,7 +49,11 @@
         meta = read_meta(m)
         next if (!include_hidden && meta['hidden'])
         eff  = meta['code']
-        pref = meta['type']
+        begin
+          eff ||= MSched::RulesEngine.canonical(m.display_name)
+        rescue
+        end
+        pref = meta['type'] || (eff && eff.split('-')[0])
         list << {
           id:    m.persistent_id,
           name:  m.display_name,
