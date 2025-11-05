@@ -10,6 +10,7 @@ th.sortable{ cursor:pointer; user-select:none }
 .cell-input select,.cell-input input{ width:100% }
 .td-flags{ white-space:normal; overflow:visible }
 .td-flags{ display:flex; gap:8px; flex-wrap:wrap }
+.dirty td{ background:#fffbea }
 
 @media (max-width: 1100px){
   .thumb-sm{ width:30px; height:30px }

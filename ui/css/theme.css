@@ -95,3 +95,15 @@ body.ms.light{
 .toast{ position:fixed; right:14px; bottom:14px; padding:10px 12px; border-radius:10px; background:#111827; border:1px solid #0b1224; color:#fff; display:none; z-index:99 }
 .toast.show{ display:block; animation:pop .2s ease-out }
 @keyframes pop{ from{ transform:translateY(6px); opacity:.6 } to{ transform:none; opacity:1 } }
+
+/* Minimal utility framework (grid + spacing) */
+.container{ max-width:1200px; margin:0 auto; padding:0 12px }
+.row{ display:flex; flex-wrap:wrap; margin:-6px }
+.row > .col{ padding:6px }
+.col{ flex:1 1 0 }
+.col-1{ flex:0 0 8.333% } .col-2{ flex:0 0 16.666% } .col-3{ flex:0 0 25% }
+.col-4{ flex:0 0 33.333% } .col-5{ flex:0 0 41.666% } .col-6{ flex:0 0 50% }
+.col-7{ flex:0 0 58.333% } .col-8{ flex:0 0 66.666% } .col-9{ flex:0 0 75% }
+.col-10{ flex:0 0 83.333% } .col-11{ flex:0 0 91.666% } .col-12{ flex:0 0 100% }
+.gap-sm{ gap:6px } .gap-md{ gap:10px } .gap-lg{ gap:16px }
+@media (max-width: 900px){ .hide-sm{ display:none !important } }
