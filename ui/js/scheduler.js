@@ -1,7 +1,11 @@
 ﻿window.Scheduler = (function(){
   const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+  let sortKey='code', sortDir='asc', filterType='';
   function header(){
-    return `<div class="toolbar"><input id="sch_q" class="search" placeholder="Search code/brand/notes..."/></div>`+
+    return `<div class="toolbar">`+
+      `<input id="sch_q" class="search" placeholder="Search code/brand/notes..."/>`+
+      `<select id="sch_filter" class="inp" style="width:180px">${filterOptions()}</select>`+
+      `</div>`+
       `<div class="tablewrap"><table><thead><tr>`+
       `${th('code','Code',90)}`+
       `${th('thumb','Thumbnail',70)}`+
@@ -13,12 +17,12 @@
       `<th style="width:60px"></th>`+
       `</tr></thead><tbody id="sch_rows"></tbody></table></div>`;
   }
-  let sortKey='code', sortDir='asc';
+  function filterOptions(){ const kinds=State.kinds||{}; const arr=['<option value="">All types</option>'].concat(Object.keys(kinds).sort().map(k=>`<option value="${k}" ${filterType===k?'selected':''}>${kinds[k]||k}</option>`)); return arr.join(''); }
   function th(key,label,w){ const st=w?` style=\"width:${w}px\"`:''; const arrow = sortKey===key ? (sortDir==='asc'?' \u25B2':' \u25BC') : ''; return `<th data-k="${key}"${st} class="sortable">${label}${arrow}</th>` }
   function row(r){
     const disabled = r.locked ? 'disabled' : '';
     const sw = r.swatch||{}; let swStyle='';
-    if(sw && sw.kind==='texture' && sw.path){ const safe=(sw.path||'').replace(/\\\\/g,'/'); swStyle = `background-image:url('file:///${safe}'); background-size:cover;`; }
+    if(sw && sw.kind==='texture' && sw.path){ const safe=(sw.path||'').replace(/\\\\/g,'/'); const v=sw.stamp||0; swStyle = `background-image:url('file:///${safe}?v=${v}'); background-size:cover;`; }
     else if(sw && sw.kind==='color' && Array.isArray(sw.rgba)){ const a=(sw.rgba[3]||255)/255.0; swStyle=`background: rgba(${sw.rgba[0]||0},${sw.rgba[1]||0},${sw.rgba[2]||0},${a});`; }
     return `<tr data-id="${r.id}" class="${r.locked?'locked':''}">`+
       `<td>${r.code||''}</td>`+
@@ -37,9 +41,9 @@
   }
   function typeOptionsLabel(sel){ const kinds=State.kinds||{}; const arr=['<option value="">(Unassigned)</option>'].concat(Object.keys(kinds).sort().map(k=>`<option value="${k}" ${sel===k?'selected':''}>${kinds[k]||k}</option>`)); return arr.join(''); }
   function currentColumns(){ return ['code','type','brand','subtype','notes','locked','sample','hidden','name','kind_label']; }
-  function render(){ const el=$('#tab-scheduler'); el.innerHTML = header(); const q=$('#sch_q'); q.addEventListener('input',renderRows); el.querySelectorAll('th.sortable').forEach(th=>th.addEventListener('click',()=>{ const k=th.getAttribute('data-k'); if(sortKey===k){ sortDir = (sortDir==='asc'?'desc':'asc'); } else { sortKey=k; sortDir='asc'; } render(); })); renderRows(); }
+  function render(){ const el=$('#tab-scheduler'); el.innerHTML = header(); const q=$('#sch_q'); q.addEventListener('input',renderRows); const f=$('#sch_filter'); f.addEventListener('change',()=>{ filterType=f.value||''; renderRows(); }); el.querySelectorAll('th.sortable').forEach(th=>th.addEventListener('click',()=>{ const k=th.getAttribute('data-k'); if(sortKey===k){ sortDir = (sortDir==='asc'?'desc':'asc'); } else { sortKey=k; sortDir='asc'; } render(); })); renderRows(); }
   function sortRows(rows){ const k=sortKey; const dir = (sortDir==='asc'?1:-1); return rows.slice().sort((a,b)=>{ let va=a[k], vb=b[k]; va=(va==null?'':va); vb=(vb==null?'':vb); if(typeof va==='string') va=va.toLowerCase(); if(typeof vb==='string') vb=vb.toLowerCase(); if(va<vb) return -1*dir; if(va>vb) return 1*dir; return 0; }); }
-  function renderRows(){ const tb=$('#sch_rows'); const query=($('#sch_q').value||'').toLowerCase(); let rows=State.visibleRows; if(query) rows=rows.filter(r=> (r.code||'').toLowerCase().includes(query) || (r.brand||'').toLowerCase().includes(query) || (r.notes||'').toLowerCase().includes(query)); rows=sortRows(rows); tb.innerHTML = rows.map(row).join(''); wireRows(); }
+  function renderRows(){ const tb=$('#sch_rows'); const query=($('#sch_q').value||'').toLowerCase(); let rows=State.visibleRows; if(filterType){ rows=rows.filter(r=> (r.type||'')===filterType); } if(query) rows=rows.filter(r=> (r.code||'').toLowerCase().includes(query) || (r.brand||'').toLowerCase().includes(query) || (r.notes||'').toLowerCase().includes(query)); rows=sortRows(rows); tb.innerHTML = rows.map(row).join(''); wireRows(); }
   function wireRows(){ $$('#sch_rows tr').forEach(tr=>{
     const id=parseInt(tr.getAttribute('data-id'),10);
     tr.querySelector('.t_delete').addEventListener('click',()=>__rpc('delete_material',{id:id}));

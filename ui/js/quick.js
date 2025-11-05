@@ -8,7 +8,8 @@
     let swStyle = '';
     if(sw && sw.kind==='texture' && sw.path){
       const safe = (sw.path||'').replace(/\\\\/g,'/');
-      swStyle = `background-image:url('file:///${safe}'); background-size:cover;`;
+      const v = sw.stamp||0;
+      swStyle = `background-image:url('file:///${safe}?v=${v}'); background-size:cover;`;
     }else if(sw && sw.kind==='color' && Array.isArray(sw.rgba)){
       const a = (sw.rgba[3]||255)/255.0; swStyle = `background: rgba(${sw.rgba[0]||0},${sw.rgba[1]||0},${sw.rgba[2]||0},${a});`;
     }

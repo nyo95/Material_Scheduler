@@ -26,6 +26,17 @@
       return if @materials_obs
       @materials_obs = Class.new(Sketchup::MaterialsObserver) do
         define_method(:onMaterialSetCurrent){ |materials, material| MSched::SyncService.material_selected(material) }
+        define_method(:onMaterialChange){ |materials, material|
+          # Update Quick selection if the changed material is current; refresh data for lists
+          begin
+            cur = materials.current
+            if material && cur && material.persistent_id == cur.persistent_id
+              MSched::SyncService.material_selected(material)
+            end
+          rescue
+          end
+          MSched::EventBus.publish(:data_changed, {})
+        }
       end.new
       Sketchup.active_model.materials.add_observer(@materials_obs)
     end
@@ -115,10 +126,11 @@
           Dir.mkdir(dir) unless File.exist?(dir)
           path = File.join(dir, "mat_#{mat.persistent_id}.png")
           mat.texture.write(path)
-          return { kind: 'texture', path: path }
+          stamp = begin; File.mtime(path).to_i; rescue; Time.now.to_i; end
+          return { kind: 'texture', path: path, stamp: stamp }
         else
           c = mat.color
-          return { kind: 'color', rgba: [c.red, c.green, c.blue, (c.alpha || 255)] }
+          return { kind: 'color', rgba: [c.red, c.green, c.blue, (c.alpha || 255)], stamp: Time.now.to_i }
         end
       rescue
         return nil
