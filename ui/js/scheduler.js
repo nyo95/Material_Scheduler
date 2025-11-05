@@ -25,7 +25,8 @@
     if(sw && sw.kind==='texture' && sw.path){ const safe=(sw.path||'').replace(/\\\\/g,'/'); const v=sw.stamp||0; swStyle = `background-image:url('file:///${safe}?v=${v}'); background-size:cover;`; }
     else if(sw && sw.kind==='color' && Array.isArray(sw.rgba)){ const a=(sw.rgba[3]||255)/255.0; swStyle=`background: rgba(${sw.rgba[0]||0},${sw.rgba[1]||0},${sw.rgba[2]||0},${a});`; }
     const isDirty = !!(State.pending && State.pending[r.id]);
-    return `<tr data-id="${r.id}" class="${r.locked?'locked':''} ${isDirty?'dirty':''}">`+
+    const sampleCls = (r.sample ? (r.sample_received ? 'sample-ok' : 'sample-wait') : '');
+    return `<tr data-id="${r.id}" class="${r.locked?'locked':''} ${isDirty?'dirty':''} ${sampleCls}">`+
       `<td class="td-code"><span class="drag-handle" title="Drag to swap"><svg width="14" height="14"><use href="#ico-drag"/></svg></span> ${r.code||''}</td>`+
       `<td class="td-thumb"><div class="thumb thumb-sm" style="${swStyle}"></div></td>`+
       `<td class="td-type cell-input"><select class="t_type" ${disabled}>${typeOptionsLabel(r.type)}</select></td>`+

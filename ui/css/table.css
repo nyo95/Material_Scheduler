@@ -14,6 +14,8 @@ th.sortable{ cursor:pointer; user-select:none }
 .drag-handle{ display:inline-flex; align-items:center; justify-content:center; width:16px; height:16px; margin-right:6px; cursor:grab; opacity:.8 }
 .drag-handle:hover{ opacity:1 }
 .drop-target{ outline:2px dashed var(--brand-2); outline-offset:-2px }
+.sample-wait td{ background:#fff1f2 } /* rose-50 */
+.sample-ok td{ background:#ecfdf5 }   /* green-50 */
 
 @media (max-width: 1100px){
   .thumb-sm{ width:30px; height:30px }

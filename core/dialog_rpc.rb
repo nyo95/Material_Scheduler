@@ -142,6 +142,10 @@ module MSched
   DialogRPC.on('set_flags') do |a|
     ids = Array(a['ids']).map(&:to_i)
     flags = a['flags'] || {}
+    # Normalize alias keys from UI
+    if flags.key?('received') && !flags.key?('sample_received')
+      flags['sample_received'] = flags.delete('received')
+    end
     changed = []
     Undo.wrap('Set Flags') do
       ids.each do |pid|
