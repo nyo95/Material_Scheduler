@@ -169,6 +169,20 @@ module MSched
   DialogRPC.on('kinds_save') { |a| KindsStore.save(a['kinds'] || {}); { ok: true } }
   DialogRPC.on('export_csv') { |a| cols = a['cols'] || []; rows = MetadataStore.entries; csv = CSVExporter.export(rows, cols); { csv: csv } }
 
+  DialogRPC.on('purge_unused_materials') do |_a|
+    used = MetadataStore.used_material_ids
+    removed = []
+    MSched::Undo.wrap('Purge Unused Materials') do
+      Sketchup.active_model.materials.each do |m|
+        next if used.include?(m.persistent_id)
+        Sketchup.active_model.materials.remove(m)
+        removed << m.display_name rescue nil
+      end
+    end
+    EventBus.publish(:data_changed, {})
+    { ok: true, removed_count: removed.size }
+  end
+
   def self.__compat_apply_change(payload)
     data  = JSON.parse(payload.to_s) rescue {}
     id    = (data['id'] || data[:id]).to_i
