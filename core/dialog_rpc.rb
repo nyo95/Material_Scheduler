@@ -166,10 +166,15 @@ module MSched
     m1 = MetadataStore.find_material(ida); m2 = MetadataStore.find_material(idb)
     raise 'NOT_FOUND' unless m1 && m2
     meta1 = MetadataStore.read_meta(m1); meta2 = MetadataStore.read_meta(m2)
+    # Disallow when locked / hidden
+    raise 'LOCKED_SWAP_DENIED' if meta1['locked'] || meta2['locked']
+    raise 'HIDDEN_SWAP_DENIED' if meta1['hidden'] || meta2['hidden']
     c1 = meta1['code'] || (RulesEngine.canonical(m1.display_name) rescue nil)
     c2 = meta2['code'] || (RulesEngine.canonical(m2.display_name) rescue nil)
     raise 'MISSING_CODE' unless c1 && c2
     t1 = c1.split('-',2)[0]; t2 = c2.split('-',2)[0]
+    # Enforce same prefix/type
+    raise 'TYPE_MISMATCH' unless t1 == t2
     Undo.wrap('Swap Codes') do
       # Use a temp unique name to avoid collision
       tmp = "__swap_#{Time.now.to_i}_#{rand(100000)}"

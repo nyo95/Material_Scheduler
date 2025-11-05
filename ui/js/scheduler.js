@@ -7,18 +7,18 @@
       `<select id="sch_filter" class="inp" style="width:180px">${filterOptions()}</select>`+
       `</div>`+
       `<div class="tablewrap"><table><thead><tr>`+
-      `${th('code','Code',80)}`+
-      `${th('thumb','Thumbnail',48)}`+
-      `${th('kind_label','Material Type')}`+
-      `${th('brand','Brand')}`+
-      `${th('subtype','Type (SKU)')}`+
-      `${th('notes','Notes')}`+
-      `${th('flags','Flags',200)}`+
+      `${th('code','Code',80,'col-code')}`+
+      `${th('thumb','Thumbnail',48,'col-thumb')}`+
+      `${th('kind_label','Material Type',null,'col-type')}`+
+      `${th('brand','Brand',null,'col-brand')}`+
+      `${th('subtype','Type (SKU)',null,'col-subtype')}`+
+      `${th('notes','Notes',null,'col-notes')}`+
+      `${th('flags','Flags',200,'col-flags')}`+
       `<th style="width:60px"></th>`+
       `</tr></thead><tbody id="sch_rows"></tbody></table></div>`;
   }
   function filterOptions(){ const kinds=State.kinds||{}; const arr=['<option value="">All types</option>'].concat(Object.keys(kinds).sort().map(k=>`<option value="${k}" ${filterType===k?'selected':''}>${kinds[k]||k}</option>`)); return arr.join(''); }
-  function th(key,label,w){ const st=w?` style=\"width:${w}px\"`:''; const arrow = sortKey===key ? (sortDir==='asc'?' \u25B2':' \u25BC') : ''; return `<th data-k="${key}"${st} class="sortable">${label}${arrow}</th>` }
+  function th(key,label,w,extraCls){ const st=w?` style=\\"width:${w}px\\"`:''; const arrow = sortKey===key ? (sortDir==='asc'?' \\u25B2':' \\u25BC') : ''; const cls = `sortable ${extraCls||''}`; return `<th data-k=\"${key}\"${st} class=\"${cls}\">${label}${arrow}</th>` }
   function row(r){
     const disabled = r.locked ? 'disabled' : '';
     const sw = r.swatch||{}; let swStyle='';
@@ -26,14 +26,14 @@
     else if(sw && sw.kind==='color' && Array.isArray(sw.rgba)){ const a=(sw.rgba[3]||255)/255.0; swStyle=`background: rgba(${sw.rgba[0]||0},${sw.rgba[1]||0},${sw.rgba[2]||0},${a});`; }
     const isDirty = !!(State.pending && State.pending[r.id]);
     const sampleCls = (r.sample ? (r.sample_received ? 'sample-ok' : 'sample-wait') : '');
-    return `<tr data-id="${r.id}" class="${r.locked?'locked':''} ${isDirty?'dirty':''} ${sampleCls}">`+
-      `<td class="td-code"><span class="drag-handle" title="Drag to swap"><svg width="14" height="14"><use href="#ico-drag"/></svg></span> ${r.code||''}</td>`+
-      `<td class="td-thumb"><div class="thumb thumb-sm" style="${swStyle}"></div></td>`+
-      `<td class="td-type cell-input"><select class="t_type" ${disabled}>${typeOptionsLabel(r.type)}</select></td>`+
-      `<td class="td-brand cell-input"><input class="t_brand" type="text" value="${r.brand||''}" ${disabled}></td>`+
-      `<td class="td-subtype cell-input"><input class="t_subtype" type="text" value="${r.subtype||''}" ${disabled}></td>`+
-      `<td class="td-notes cell-input"><input class="t_notes" type="text" value="${r.notes||''}" ${disabled}></td>`+
-      `<td class="td-flags">${flagHtml(r)}</td>`+
+    return `<tr data-id="${r.id}" data-type="${r.type||''}" data-locked="${r.locked?1:0}" class="${r.locked?'locked':''} ${isDirty?'dirty':''} ${sampleCls}">`+
+      `<td class="td-code col-code"><span class="drag-handle" title="Drag to swap"><svg width="14" height="14"><use href="#ico-drag"/></svg></span> ${r.code||''}</td>`+
+      `<td class="td-thumb col-thumb"><div class="thumb thumb-sm" style="${swStyle}"></div></td>`+
+      `<td class="td-type cell-input col-type"><select class="t_type" ${disabled}>${typeOptionsLabel(r.type)}</select></td>`+
+      `<td class="td-brand cell-input col-brand"><input class="t_brand" type="text" value="${r.brand||''}" ${disabled}></td>`+
+      `<td class="td-subtype cell-input col-subtype"><input class="t_subtype" type="text" value="${r.subtype||''}" ${disabled}></td>`+
+      `<td class="td-notes cell-input col-notes"><input class="t_notes" type="text" value="${r.notes||''}" ${disabled}></td>`+
+      `<td class="td-flags col-flags">${flagHtml(r)}</td>`+
       `<td class="td-actions">`+
         `<button class="btn mini t_apply" ${isDirty?'':'disabled'}>Apply</button> `+
         `<button class="btn mini t_revert" ${isDirty?'':'disabled'}>Revert</button> `+
@@ -60,9 +60,9 @@
       handle.addEventListener('dragstart',ev=>{ ev.stopPropagation(); ev.dataTransfer.setData('text/plain', String(id)); ev.dataTransfer.effectAllowed = 'move'; tr.classList.add('dragging'); });
       handle.addEventListener('dragend',()=>{ tr.classList.remove('dragging'); });
     }
-    tr.addEventListener('dragover',ev=>{ ev.preventDefault(); tr.classList.add('drop-target'); });
+    tr.addEventListener('dragover',ev=>{ ev.preventDefault(); const locked = (tr.getAttribute('data-locked')==='1'); const srcId = parseInt(ev.dataTransfer.getData('text/plain')||'0',10); const srcTr = document.querySelector(`tr[data-id="${srcId}"]`); const typeOk = srcTr && (srcTr.getAttribute('data-type')===tr.getAttribute('data-type')); if(!locked && typeOk){ tr.classList.add('drop-target'); } else { tr.classList.remove('drop-target'); } });
     tr.addEventListener('dragleave',()=>{ tr.classList.remove('drop-target'); });
-    tr.addEventListener('drop',ev=>{ ev.preventDefault(); tr.classList.remove('drop-target'); const src = parseInt(ev.dataTransfer.getData('text/plain')||'0',10); const dst = id; if(src && dst && src!==dst){ __rpc('swap_codes',{ a:src, b:dst }); } });
+    tr.addEventListener('drop',ev=>{ ev.preventDefault(); tr.classList.remove('drop-target'); const src = parseInt(ev.dataTransfer.getData('text/plain')||'0',10); const dst = id; if(!src||!dst||src===dst){return;} const srcTr=document.querySelector(`tr[data-id="${src}"]`); const typeOk = srcTr && (srcTr.getAttribute('data-type')===tr.getAttribute('data-type')); const dstLocked = (tr.getAttribute('data-locked')==='1'); const srcLocked = srcTr && (srcTr.getAttribute('data-locked')==='1'); if(srcLocked || dstLocked){ __toast('Cannot swap: locked'); return; } if(!typeOk){ __toast('Types must match'); return; } __rpc('swap_codes',{ a:src, b:dst }); });
     const del = tr.querySelector('.t_delete'); if(del){ del.addEventListener('click',()=>__rpc('delete_material',{id:id})); }
     tr.querySelectorAll('.chip').forEach(chip=>{
       const key=chip.getAttribute('data-k'); const sw=chip.querySelector('.switch');

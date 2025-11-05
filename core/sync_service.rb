@@ -27,7 +27,7 @@
       @materials_obs = Class.new(Sketchup::MaterialsObserver) do
         define_method(:onMaterialSetCurrent){ |materials, material| MSched::SyncService.material_selected(material) }
         define_method(:onMaterialChange){ |materials, material|
-          # Update Quick selection if the changed material is current; refresh data for lists
+          # Only update Quick selection snapshot; other tabs stay cached until Refresh
           begin
             cur = materials.current
             if material && cur && material.persistent_id == cur.persistent_id
@@ -35,7 +35,6 @@
             end
           rescue
           end
-          MSched::EventBus.publish(:data_changed, {})
         }
       end.new
       Sketchup.active_model.materials.add_observer(@materials_obs)
