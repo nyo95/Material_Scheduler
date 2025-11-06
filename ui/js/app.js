@@ -1,4 +1,4 @@
-ï»¿;(function(){
+;(function(){
   const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
   const normalizeBtn = document.querySelector('[data-action="normalize"]');
   function updateBulkVisibility(tab){ if(!normalizeBtn) return; normalizeBtn.style.display = (tab==='quick') ? 'none' : ''; document.body.classList.toggle('quick-active', tab==='quick'); }
@@ -42,7 +42,7 @@
     const visible = rows.filter(r=>!r.hidden).length;
     const hidden  = rows.filter(r=> r.hidden).length;
     const samples = rows.filter(r=> r.sample && !r.hidden).length;
-    setStatus(visible + ' visible â€¢ ' + hidden + ' hidden â€¢ ' + samples + ' samples â€¢ ' + (new Date().toLocaleTimeString()));
+    setStatus(visible + ' visible • ' + hidden + ' hidden • ' + samples + ' samples • ' + (new Date().toLocaleTimeString()));
   }
   window.__ms_receive_full=function(data){
     State.rows=data.entries||[]; State.kinds=data.kinds||{};
@@ -177,3 +177,9 @@ window.addEventListener('DOMContentLoaded', function(){
   window.addEventListener('unhandledrejection', function(e){ try{ var r=e.reason||{}; ping('jserr:'+ (r.message||'promise')); }catch(_){} });
 })();
 
+
+// Sheet kebabs for Scheduler and Samples (preview wiring)
+(function(){
+  function wireKebab(btnId,panelId){ try{ var b=document.getElementById(btnId), p=document.getElementById(panelId); if(!b||!p) return; b.addEventListener('click',function(){ p.classList.toggle('show'); }); document.addEventListener('click', function(e){ if(p && !p.contains(e.target) && e.target!==b){ p.classList.remove('show'); } }); p.querySelectorAll('.menu-item').forEach(function(it){ it.addEventListener('click', function(){ var k=it.getAttribute('data-menu'); p.classList.remove('show'); if(k==='export'){ try{ var cols=(window.Scheduler&&Scheduler.currentColumns)? Scheduler.currentColumns(): ['code']; __rpc('export_csv',{ cols: cols }); }catch(_){ } return; } var tabBtn=document.querySelector('.ms-tabs .tab[data-tab="'+k+'"]'); if(tabBtn){ tabBtn.click(); } });}); }catch(_){} }
+  try{ wireKebab('sch-menu','sch-panel'); wireKebab('smp-menu','smp-panel'); }catch(_){}
+})();

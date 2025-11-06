@@ -12,7 +12,7 @@ module MSched
           preferences_key: 'material_scheduler_ui',
           width: 1120, height: 720, resizable: true, scrollable: true
         )
-        # Roll back to stable classic UI while Tailwind redesign is completed
+        # Use stable classic UI (v0.4)
         d.set_file(File.join(MSched::ROOT, 'ui', 'dialog.html'))
 
         d.add_action_callback('rpc') do |_ctx, payload|
