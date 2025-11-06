@@ -2,7 +2,7 @@
   const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
   let sortKey='code', sortDir='asc', filterType='';
   function header(){
-    return `<div class="toolbar">`+
+    return `<div class=\"toolbar flex items-center gap-2 mb-2\">`+
       `<input id="sch_q" class="search" placeholder="Search code/brand/notes..."/>`+
       `<select id="sch_filter" class="inp" style="width:180px">${filterOptions()}</select>`+
       `</div>`+
@@ -78,3 +78,4 @@
   function applyRow(id){ const patch=(State.pending||{})[id]||{}; if(Object.keys(patch).length===0){ return; } patch.id=id; __rpc('quick_apply', patch); delete (State.pending||{})[id]; }
   return { render: render, currentColumns: currentColumns };
 })();
+

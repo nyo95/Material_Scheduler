@@ -3,17 +3,17 @@
   function render(){
     const el=$('#tab-samples'); const rows=State.rows.filter(r=>r.sample&&!r.hidden);
     el.innerHTML = `
-      <div class="toolbar"><div class="muted">${rows.length} samples</div><label style='display:flex;align-items:center;gap:6px;margin-left:auto'><input id='s_need_only' type='checkbox'/> Need only</label></div>
-      <div class="tablewrap"><table>
-        <thead><tr><th>Code</th><th>Brand</th><th>Material Type</th><th>Sample Notes</th><th>Received</th></tr></thead>
+      <div class="toolbar flex items-center gap-3 mb-2"><div class="muted text-sm text-slate-600">${rows.length} samples</div><label class='ml-auto inline-flex items-center gap-2 text-sm text-slate-700'><input id='s_need_only' type='checkbox'/> Need only</label></div>
+      <div class="tablewrap"><table class="min-w-full text-sm">
+        <thead><tr><th class="text-left font-semibold text-slate-600 bg-slate-50">Code</th><th class="text-left font-semibold text-slate-600 bg-slate-50">Brand</th><th class="text-left font-semibold text-slate-600 bg-slate-50">Material Type</th><th class="text-left font-semibold text-slate-600 bg-slate-50">Sample Notes</th><th class="text-left font-semibold text-slate-600 bg-slate-50">Received</th></tr></thead>
         <tbody id='s_rows'>
           ${rows.map(r=>`
             <tr data-id='${r.id}'>
               <td>${r.code||''}</td>
               <td>${r.brand||''}</td>
               <td>${(State.kinds||{})[r.type]||r.type||''}</td>
-              <td><input class='s_notes inp' type='text' value='${r.sample_notes||''}' ${r.locked?'disabled':''}></td>
-              <td><label style='display:flex;align-items:center;gap:6px'><input class='s_recv' type='checkbox' ${r.sample_received?'checked':''} ${r.locked?'disabled':''}/> <span>${r.sample_received?'Yes':'No'}</span></label></td>
+              <td><input class='s_notes inp rounded-md border border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 px-2 py-1 text-sm' type='text' value='${r.sample_notes||''}' ${r.locked?'disabled':''}></td>
+              <td><label class='inline-flex items-center gap-2'><input class='s_recv' type='checkbox' ${r.sample_received?'checked':''} ${r.locked?'disabled':''}/> <span>${r.sample_received?'Yes':'No'}</span></label></td>
             </tr>
           `).join('')}
         </tbody>
