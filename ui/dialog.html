@@ -7,6 +7,20 @@
   <link rel='stylesheet' href='css/theme.css'/>
   <link rel='stylesheet' href='css/table.css'/>
   <link rel='stylesheet' href='css/forms.css'/>
+  <style>
+    :root { --ms-header-h: 56px; --ms-nav-h: 44px; }
+    body.ms { overflow: hidden; }
+    .ms-header { height: var(--ms-header-h); }
+    .ms-tabs { height: var(--ms-nav-h); }
+    .ms-content-wrap { height: calc(100vh - (var(--ms-header-h) + var(--ms-nav-h))); overflow: hidden; }
+    .ms-scroll { height: 100%; overflow: auto; }
+    .menu-btn { padding: 6px 8px; border-radius: 6px; }
+    .menu-btn:hover { background: rgba(15, 23, 42, 0.06); }
+    .menu-panel { position: absolute; right: 12px; top: calc(var(--ms-header-h) + 6px); width: 220px; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); display: none; z-index: 50; }
+    .menu-panel.show { display: block; }
+    .menu-item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; font-size: 14px; color: #334155; cursor: pointer; }
+    .menu-item:hover { background: #f8fafc; }
+  </style>
   <!-- Inline SVG sprite for lightweight icons -->
   <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
     <symbol id="ico-refresh" viewBox="0 0 24 24"><path fill="currentColor" d="M17.65 6.35A7.95 7.95 0 0 0 12 4a8 8 0 1 0 7.9 6h-2.05A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L14 10h6V4l-2.35 2.35z"/></symbol>
@@ -23,9 +37,15 @@
   </svg>
 </head>
 <body class='ms light bg-slate-50 text-slate-800 font-sans'>
-  <header class='ms-header bg-white border-b border-slate-200 sticky top-0 z-10 px-4 py-3 flex items-center justify-between'>
+  <header class='ms-header bg-white border-b border-slate-200 sticky top-0 z-10 px-4 flex items-center justify-between'>
     <div class='ms-title text-lg font-semibold tracking-tight'>Material Scheduler <span class='muted font-normal text-slate-500'>v0.4.x</span></div>
-    <div class='ms-actions flex items-center gap-2'>
+    <div class='ms-actions flex items-center gap-2 relative'>
+      <button id='btn-menu' class='menu-btn text-slate-700' title='Menu' aria-label='Menu'>≡</button>
+      <div id='menu-panel' class='menu-panel'>
+        <div class='menu-item' data-menu='kinds'>Kinds</div>
+        <div class='menu-item' data-menu='hidden'>Hidden</div>
+        <div class='menu-item' data-menu='export'>Export</div>
+      </div>
       <button class='btn inline-flex items-center gap-1 px-3 py-2 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700' data-action='refresh' title='Refresh'>
         <span class='ico'><svg width='16' height='16'><use href='#ico-refresh'/></svg></span> Refresh
       </button>
@@ -46,13 +66,15 @@
     <button class='tab px-3 py-2 rounded-md text-sm hover:bg-slate-100' data-tab='hidden'>Hidden</button>
   </nav>
 
-  <main class='ms-content p-4'>
-    <section class='tabpanel active space-y-4' id='tab-quick'></section>
-    <section class='tabpanel scrollable space-y-4' id='tab-scheduler'></section>
-    <section class='tabpanel scrollable space-y-4' id='tab-kinds'></section>
-    <section class='tabpanel scrollable space-y-4' id='tab-samples'></section>
-    <section class='tabpanel scrollable space-y-4' id='tab-hidden'></section>
-  </div></main>
+  <div class='ms-content-wrap'>
+    <main class='ms-content ms-scroll p-4'>
+      <section class='tabpanel active space-y-4' id='tab-quick'></section>
+      <section class='tabpanel scrollable space-y-4' id='tab-scheduler'></section>
+      <section class='tabpanel scrollable space-y-4' id='tab-kinds'></section>
+      <section class='tabpanel scrollable space-y-4' id='tab-samples'></section>
+      <section class='tabpanel scrollable space-y-4' id='tab-hidden'></section>
+    </main>
+  </div>
 
   <footer class='ms-footer bg-white border-t border-slate-200 px-4 py-2 flex items-center justify-between'>
     <div id='status' class='status text-sm text-slate-600'>Ready</div>
@@ -88,6 +110,23 @@
   <script src='js/kinds.js'></script>
   <script src='js/samples.js'></script>
   <script src='js/hidden.js'></script>
+  <script>
+    // Simple menu toggle + actions wired to existing tabs/flows
+    (function(){
+      try{
+        var btn=document.getElementById('btn-menu'); var panel=document.getElementById('menu-panel');
+        if(btn&&panel){ btn.addEventListener('click', function(){ panel.classList.toggle('show'); }); }
+        document.addEventListener('click', function(e){ try{ if(!panel.contains(e.target) && e.target!==btn){ panel.classList.remove('show'); } }catch(_){} });
+        (panel.querySelectorAll('.menu-item')||[]).forEach(function(it){
+          it.addEventListener('click', function(){
+            var k=it.getAttribute('data-menu'); panel.classList.remove('show');
+            if(k==='export'){ try{ var cols=(window.Scheduler&&Scheduler.currentColumns)? Scheduler.currentColumns(): ['code']; __rpc('export_csv',{ cols: cols }); }catch(_){} return; }
+            var tabBtn = document.querySelector('.ms-tabs .tab[data-tab="'+k+'"]'); if(tabBtn){ tabBtn.click(); }
+          });
+        });
+      }catch(e){}
+    })();
+  </script>
 <script>window.addEventListener('DOMContentLoaded', function(){ if(window.sketchup && sketchup.ready){ sketchup.ready(); } });</script></body>
 </html>
 
