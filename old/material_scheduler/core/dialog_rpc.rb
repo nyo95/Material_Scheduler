@@ -74,9 +74,9 @@ module MSched
 
     def self.push_full
       data = {
-        entries: MSched::MetadataStore.entries(include_hidden: true, used_only: false),
+        entries: MSched::MetadataStore.entries(include_hidden: true, used_only: true),
         kinds: MSched::KindsStore.list,
-        logs: MSched::Logger.tail(50),
+        logs: MSched::Logger.tail(10),
         selected: @last_selected || nil
       }
       @dlg && @dlg.execute_script('window.__ms_receive_full(' + data.to_json + ')')
@@ -93,8 +93,7 @@ MSched::EventBus.subscribe(:data_changed) { |_p| MSched::DialogRPC.push_full }
 MSched::EventBus.subscribe(:selected_material_info) { |p| MSched::DialogRPC.update_selected(p) if p }
 
 module MSched
-  # Selaraskan get_full dengan push_full agar tampilan konsisten
-  DialogRPC.on('get_full') { |_a| { entries: MetadataStore.entries(include_hidden: true, used_only: false), kinds: KindsStore.list } }
+  DialogRPC.on('get_full') { |_a| { entries: MetadataStore.entries(include_hidden: true, used_only: true), kinds: KindsStore.list } }
 
   DialogRPC.on('quick_apply') do |a|
     id = a['id'].to_i
@@ -107,28 +106,17 @@ module MSched
     Undo.wrap('Quick Apply') do
       m = MetadataStore.find_material(id); raise 'NOT_FOUND' unless m
       meta = MetadataStore.read_meta(m)
+      raise 'LOCKED_EDIT_DENIED' if meta['locked']
 
-      if meta['locked']
-        # Locked: block quick edit changes
-        raise 'LOCKED_EDIT_DENIED'
-      else
-        # Unlocked: type/code allocation and metadata updates
-        if prefix && prefix != ''
-          MetadataStore.write_meta(m, { 'type' => prefix })
-        end
-        prev_code = meta['code']
-        prev_pref = prev_code ? prev_code.split('-',2)[0] : (meta['type'] || nil)
-        eff_pref = (prefix && prefix != '') ? prefix : (meta['type'] || nil)
-        if eff_pref && eff_pref != ''
-          desired = if (prefix && !prefix.empty? && prev_pref && prev_pref != eff_pref)
-            1
-          else
-            (number.to_i > 0 ? number.to_i : (RulesEngine.number_of(meta['code']) || 1))
-          end
-          CodeAllocator.allocate_from_number(m, eff_pref, desired)
-        end
-        MetadataStore.write_meta(m, { 'brand' => brand, 'notes' => notes, 'subtype' => subtype })
+      if prefix && prefix != ''
+        MetadataStore.write_meta(m, { 'type' => prefix })
       end
+      eff_pref = (prefix && prefix != '') ? prefix : (meta['type'] || nil)
+      if eff_pref && eff_pref != ''
+        desired = number.to_i > 0 ? number.to_i : (RulesEngine.number_of(meta['code']) || 1)
+        CodeAllocator.allocate_from_number(m, eff_pref, desired)
+      end
+      MetadataStore.write_meta(m, { 'brand' => brand, 'notes' => notes, 'subtype' => subtype })
       # Build updated snapshot to return
       latest = MetadataStore.read_meta(m)
       sw = nil; begin; sw = MSched::SyncService.swatch_for(m); rescue; end
@@ -155,8 +143,6 @@ module MSched
   DialogRPC.on('set_flags') do |a|
     ids = Array(a['ids']).map(&:to_i)
     flags = a['flags'] || {}
-    # Remove deprecated keys
-    flags.delete('sample_notes') if flags.key?('sample_notes')
     # Normalize alias keys from UI
     if flags.key?('received') && !flags.key?('sample_received')
       flags['sample_received'] = flags.delete('received')
@@ -166,8 +152,8 @@ module MSched
       ids.each do |pid|
         m = MetadataStore.find_material(pid); next unless m
         meta = MetadataStore.read_meta(m)
-        # When locked: allow toggling 'locked' itself, 'sample' and 'sample_received'; block others
-        if meta['locked'] && (flags.keys - ['locked','sample','sample_received']).any?
+        # When locked: allow toggling 'sample' only; block others
+        if meta['locked'] && (flags.keys - ['locked','sample']).any?
           next
         end
         MetadataStore.write_meta(m, meta.merge(flags)); changed << pid
@@ -190,37 +176,18 @@ module MSched
     t1 = c1.split('-',2)[0]; t2 = c2.split('-',2)[0]
     # Enforce same prefix/type
     raise 'TYPE_MISMATCH' unless t1 == t2
-    # Full swap: exchange codes AND metadata (brand, notes, subtype, flags, etc.)
-    MSched::Logger.info(:swap_begin, a: ida, b: idb, a_meta: meta1, b_meta: meta2, a_name: m1.display_name, b_name: m2.display_name)
-    # while renaming safely using a temporary name to avoid collisions.
+    # Full swap: exchange codes (rename) safely using a temporary name to avoid collisions.
     Undo.wrap('Swap Codes') do
       tmp = "__swap_#{Time.now.to_i}_#{rand(100000)}"
-      # Prepare metadata maps ensuring keys missing on one side are explicitly cleared on the other
-      m1_meta_base = (meta1 || {}).dup
-      m2_meta_base = (meta2 || {}).dup
-      keys = (m1_meta_base.keys + m2_meta_base.keys).uniq - ['code','type']
-      # Build payloads that include explicit nils to clear stale values when merging
-      m1_clean = {}; m2_clean = {}
-      keys.each { |k| m1_clean[k] = m1_meta_base[k]; m2_clean[k] = m2_meta_base[k] }
-
-      # Move m1 away to avoid name collision
+      # Move m1 away
       m1.name = tmp
       MetadataStore.write_meta(m1, meta1.merge({ 'code'=>nil }))
-
-      # Assign m1's metadata (w/ code/type from c1) to m2
+      # Assign code1 to m2
       m2.name = c1
-      MetadataStore.write_meta(m2, m2_clean.merge(m1_clean).merge({ 'code'=>c1, 'type'=>t1 }))
-
-      # Assign m2's metadata (w/ code/type from c2) to m1
+      MetadataStore.write_meta(m2, meta2.merge({ 'code'=>c1, 'type'=>t1 }))
+      # Assign code2 to m1
       m1.name = c2
-      MetadataStore.write_meta(m1, m1_clean.merge(m2_clean).merge({ 'code'=>c2, 'type'=>t2 }))
-    end
-    # Post-swap snapshot
-    begin
-      m1_after = MetadataStore.read_meta(m1); m2_after = MetadataStore.read_meta(m2)
-      MSched::Logger.info(:swap_done, a: ida, b: idb, a_meta: m1_after, b_meta: m2_after, a_name: m1.display_name, b_name: m2.display_name)
-    rescue => e
-      MSched::Logger.warn(:swap_postlog_error, message: e.message)
+      MetadataStore.write_meta(m1, meta1.merge({ 'code'=>c2, 'type'=>t2 }))
     end
     EventBus.publish(:data_changed, {}); { ok: true }
   end
@@ -281,7 +248,7 @@ module MSched
       else
         { ok: false }
       end
-    when 'brand','subtype','notes','locked','sample','sample_received','hidden'
+    when 'brand','subtype','notes','sample_notes','locked','sample','sample_received','hidden'
       if field == 'brand' || field == 'notes'
         val = (val || '').to_s.strip.gsub(/\s+/, ' ')
       end

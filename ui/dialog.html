@@ -71,7 +71,17 @@
   </div>
 
   <div id='toast' class='toast text-sm'></div>
-
+  <!-- Pre-define receive_full stub to buffer early pushes from Ruby before app.js loads -->
+  <script>
+    (function(){
+      try{
+        if(!window.__ms_receive_full){
+          window.__MS_Q = window.__MS_Q || [];
+          window.__ms_receive_full = function(d){ try{ (window.__MS_Q||[]).push(d); }catch(e){} };
+        }
+      }catch(e){}
+    })();
+  </script>
   <script src='js/app.js'></script>
   <script src='js/quick.js'></script>
   <script src='js/scheduler.js'></script>

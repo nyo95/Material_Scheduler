@@ -3,8 +3,7 @@
   function tpl(p){
     if(!p) return '<div class="pill">No selection</div>';
     const kinds = State.kinds||{};
-    const un = p.type ? '<option value="" disabled>(Unassigned)</option>' : '<option value="" selected disabled>(Unassigned)</option>';
-    const opts = [un].concat(Object.keys(kinds).sort().map(function(k){ return '<option value="'+k+'"'+(p.type===k?' selected':'')+'>'+k+' - '+(kinds[k]||'')+'</option>'; })).join('');
+    const opts = ['<option value="">(Unassigned)</option>'].concat(Object.keys(kinds).sort().map(function(k){ return '<option value="'+k+'"'+(p.type===k?' selected':'')+'>'+k+' — '+(kinds[k]||'')+'</option>'; })).join('');
     const sw = p.swatch||{};
     let swStyle = '';
     if(sw && sw.kind==='texture' && sw.path){
@@ -37,7 +36,7 @@
               <button class="flag ${p.sample?'on':''}" data-k="sample" title="Sample"><svg width="16" height="16"><use href="#ico-flask"/></svg></button>
               <button class="flag ${p.hidden?'on':''}" data-k="hidden" title="Hidden"><svg width="16" height="16"><use href="#ico-eye"/></svg></button>
               <button class="flag ${p.sample_received?'on':''}" data-k="received" title="Received"><svg width="16" height="16"><use href="#ico-check"/></svg></button>
-              <button class=\\"btn btn-primary btn-lg inline-flex items-center justify-center rounded-md bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm px-3 py-2\\" id=\"q_apply\" title=\"Apply changes\"><svg width=\"16\" height=\"16\"><use href=\"#ico-check\"/></svg></button>
+              <button class="btn btn-primary btn-lg" id="q_apply" title="Apply changes"><svg width="16" height="16" style="margin-right:6px"><use href="#ico-apply"/></svg>Apply</button>
             </div>
           </div>
         </div>
@@ -60,15 +59,8 @@
     // Flags toggles
     (el.querySelectorAll('.flag')||[]).forEach(btn=>{
       const key=btn.getAttribute('data-k');
-      btn.addEventListener('click',()=>{
-        // Allow toggling 'locked' itself and 'received' even when locked
-        if(p.locked && ['sample','locked','received'].indexOf(key)===-1){ __toast('Locked: only sample/received/unlock'); return; }
-        const on=!btn.classList.contains('on'); btn.classList.toggle('on');
-        if(window.__setFlag){ window.__setFlag(p.id,key,on); } else { const flags={}; flags[key]=on; __rpc('set_flags',{ ids:[p.id], flags:flags }); }
-      });
+      btn.addEventListener('click',()=>{ if(p.locked && key!=='sample'){ __toast('Locked: only sample allowed'); return; } const on=!btn.classList.contains('on'); btn.classList.toggle('on'); if(window.__setFlag){ window.__setFlag(p.id,key,on); } else { const flags={}; flags[key]=on; __rpc('set_flags',{ ids:[p.id], flags:flags }); } });
     });
   }
   return { render: render, onSelected: onSelected };
 })();
-
-

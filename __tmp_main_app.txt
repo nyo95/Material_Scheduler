@@ -1,4 +1,4 @@
-ï»¿;(function(){
+;(function(){
   const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
   const normalizeBtn = document.querySelector('[data-action="normalize"]');
   function updateBulkVisibility(tab){ if(!normalizeBtn) return; normalizeBtn.style.display = (tab==='quick') ? 'none' : ''; document.body.classList.toggle('quick-active', tab==='quick'); }
@@ -42,7 +42,7 @@
     const visible = rows.filter(r=>!r.hidden).length;
     const hidden  = rows.filter(r=> r.hidden).length;
     const samples = rows.filter(r=> r.sample && !r.hidden).length;
-    setStatus(visible + ' visible â€¢ ' + hidden + ' hidden â€¢ ' + samples + ' samples â€¢ ' + (new Date().toLocaleTimeString()));
+    setStatus(visible + ' visible • ' + hidden + ' hidden • ' + samples + ' samples • ' + (new Date().toLocaleTimeString()));
   }
   window.__ms_receive_full=function(data){
     State.rows=data.entries||[]; State.kinds=data.kinds||{};
@@ -128,16 +128,6 @@ window.addEventListener('DOMContentLoaded', function(){
     if(close) close.addEventListener('click', toggle);
   }
   try{ bindToggles(); }catch(e){}
-})();
-
-// If Ruby pushed data before JS initialized, flush the queued payloads now
-(function(){
-  try{
-    if(Array.isArray(window.__MS_Q) && window.__MS_Q.length){
-      var queued = window.__MS_Q.splice(0);
-      queued.forEach(function(d){ try{ window.__ms_receive_full(d); }catch(e){} });
-    }
-  }catch(e){}
 })();
 
 // Watchdog: keep bridge/render healthy without rebuilding RBZ

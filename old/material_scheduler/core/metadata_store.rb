@@ -97,6 +97,7 @@
           brand: meta['brand'],
           subtype: meta['subtype'],
           notes: meta['notes'],
+          sample_notes: meta['sample_notes'],
           sample: !!meta['sample'],
           sample_received: !!meta['sample_received'],
           hidden: !!meta['hidden'],

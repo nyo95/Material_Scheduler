@@ -4,20 +4,11 @@
   function updateBulkVisibility(tab){ if(!normalizeBtn) return; normalizeBtn.style.display = (tab==='quick') ? 'none' : ''; document.body.classList.toggle('quick-active', tab==='quick'); }
   $$('.ms-tabs .tab').forEach(btn=>btn.addEventListener('click',()=>{
     $$('.ms-tabs .tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
-    const tab=btn.dataset.tab;
-    // Force-hide all panels, then show selected
-    $$('.tabpanel').forEach(p=>{ p.classList.remove('active'); try{ p.style.display='none'; }catch(e){} });
-    const activePanel = document.getElementById('tab-'+tab);
-    if(activePanel){ activePanel.classList.add('active'); try{ activePanel.style.display='block'; }catch(e){} }
-    // Extra safety: when leaving Scheduler, clear its tbody to avoid any bleed from sticky header
-    if(tab!=='scheduler'){
-      try{ const tb=document.querySelector('#tab-scheduler #sch_rows'); if(tb){ tb.innerHTML=''; } }catch(e){}
-    }
+    const tab=btn.dataset.tab; $$('.tabpanel').forEach(s=>s.classList.remove('active')); document.getElementById('tab-'+tab).classList.add('active');
     updateBulkVisibility(tab);
     if(tab==='quick') Quick.render(); if(tab==='scheduler') Scheduler.render();
     if(tab==='kinds') Kinds.render();
     if(tab==='samples') Samples.render(); if(tab==='hidden') Hidden.render();
-    try{ if(window.sketchup && sketchup.ping){ sketchup.ping('tab='+tab); } }catch(e){}
   }));
   const statusEl = document.querySelector('#status');
   function setStatus(s){ statusEl.textContent=s; } window.__setStatus=setStatus;
@@ -52,7 +43,6 @@
     if(active==='quick') Quick.render(); if(active==='scheduler') Scheduler.render();
     if(active==='kinds') Kinds.render();
     if(active==='samples') Samples.render(); if(active==='hidden') Hidden.render();
-    try{ if(window.sketchup && sketchup.ping){ sketchup.ping('receive_active='+active+' rows='+(State.rows||[]).length); } }catch(e){}
     updateStatusBar();
   };
   window.__ms_selected_info=function(p){ Quick.onSelected(p); };
@@ -97,83 +87,4 @@ window.addEventListener('DOMContentLoaded', function(){
     }
   }catch(e){}
 });
-
-// Lightweight log panel wiring (appends to existing behavior)
-(function(){
-  function renderLogs(){
-    var listEl = document.querySelector('#log-list'); if(!listEl) return;
-    var logs = (window.State && State.logs) || [];
-    var html = logs.map(function(l){
-      var ts = l.ts || '';
-      var lv = (l.level||'').toString();
-      var ev = l.event || '';
-      var data = l.data ? JSON.stringify(l.data) : '';
-      var cls = lv==='error' ? 'log-level-error' : (lv==='warn' ? 'log-level-warn' : 'log-level-info');
-      return '<div class="log-item '+cls+'">['+ts+'] '+lv.toUpperCase()+' '+ev+' '+data+'</div>';
-    }).join('');
-    listEl.innerHTML = html || '<div class="muted">No logs</div>';
-  }
-  // Patch receive_full to also refresh logs
-  var __orig_receive_full = window.__ms_receive_full;
-  window.__ms_receive_full = function(data){
-    try{ if(__orig_receive_full) __orig_receive_full(data); }catch(e){}
-    try{ window.State = window.State || {}; State.logs = data && data.logs || []; renderLogs(); }catch(e){}
-  };
-  // Toggle handlers
-  function bindToggles(){
-    var btn = document.querySelector('#btn-logs'); var dot=document.querySelector('#log-dot'); var panel=document.querySelector('#log-panel'); var close=document.querySelector('#btn-close-logs');
-    function toggle(){ if(!panel) return; var sh = panel.style.display !== 'none'; panel.style.display = sh ? 'none' : 'block'; if(!sh) renderLogs(); }
-    if(btn) btn.addEventListener('click', toggle);
-    if(dot) dot.addEventListener('click', toggle);
-    if(close) close.addEventListener('click', toggle);
-  }
-  try{ bindToggles(); }catch(e){}
-})();
-
-// If Ruby pushed data before JS initialized, flush the queued payloads now
-(function(){
-  try{
-    if(Array.isArray(window.__MS_Q) && window.__MS_Q.length){
-      var queued = window.__MS_Q.splice(0);
-      queued.forEach(function(d){ try{ window.__ms_receive_full(d); }catch(e){} });
-    }
-  }catch(e){}
-})();
-
-// Watchdog: keep bridge/render healthy without rebuilding RBZ
-(function(){
-  function ping(msg){ try{ if(window.sketchup && sketchup.ping){ sketchup.ping(msg); } }catch(e){} }
-  function activeTab(){ var a=document.querySelector('.ms-tabs .tab.active'); return (a&&a.dataset&&a.dataset.tab)||'quick'; }
-  function ensurePanels(){ try{ var tab=activeTab(); ['quick','scheduler','kinds','samples','hidden'].forEach(function(t){ var el=document.getElementById('tab-'+t); if(!el) return; el.style.display = (t===tab)?'block':'none'; }); }catch(e){} }
-  var last={ tab:'', rows:-1, kinds:-1 };
-  function rerenderIfNeeded(){
-    var tab=activeTab(); ensurePanels();
-    var rows=(window.State&&State.rows)? State.rows.length : 0;
-    var kindsCount=(window.State&&State.kinds)? Object.keys(State.kinds).length : 0;
-    if(tab!==last.tab || rows!==last.rows || kindsCount!==last.kinds){
-      try{
-        if(tab==='quick')      { Quick.render(); }
-        else if(tab==='scheduler'){ Scheduler.render(); }
-        else if(tab==='kinds') { Kinds.render(); }
-        else if(tab==='samples'){ Samples.render(); }
-        else if(tab==='hidden'){ Hidden.render(); }
-      }catch(e){ ping('jserr:'+ (e&&e.message?e.message:'')); }
-      last={ tab:tab, rows:rows, kinds:kindsCount };
-    }
-  }
-  function onTick(){
-    try{
-      // Nudge bridge if injected late
-      if(window.sketchup && sketchup.ready && !(window.sketchup && sketchup.rpc)){
-        try{ sketchup.ready(); }catch(e){}
-      }
-      rerenderIfNeeded();
-    }catch(e){ ping('jserr:'+ (e&&e.message?e.message:'')); }
-  }
-  window.addEventListener('focus', function(){ setTimeout(onTick, 20); });
-  setInterval(onTick, 500);
-  // Global error traps
-  window.addEventListener('error', function(e){ ping('jserr:'+ (e.message||'err')); });
-  window.addEventListener('unhandledrejection', function(e){ try{ var r=e.reason||{}; ping('jserr:'+ (r.message||'promise')); }catch(_){} });
-})();
 
