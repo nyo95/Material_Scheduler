@@ -12,12 +12,8 @@ module MSched
           preferences_key: 'material_scheduler_ui',
           width: 1120, height: 720, resizable: true, scrollable: true
         )
-        path = File.join(MSched::ROOT, 'ui', 'material_scheduler.html')
-        if File.exist?(path)
-          d.set_file(path)
-        else
-          d.set_file(File.join(MSched::ROOT, 'ui', 'dialog.html'))
-        end
+        # Roll back to stable classic UI while Tailwind redesign is completed
+        d.set_file(File.join(MSched::ROOT, 'ui', 'dialog.html'))
 
         d.add_action_callback('rpc') do |_ctx, payload|
           begin
@@ -80,7 +76,7 @@ module MSched
       data = {
         entries: MSched::MetadataStore.entries(include_hidden: true, used_only: true),
         kinds: MSched::KindsStore.list,
-        logs: MSched::Logger.tail(10),
+        logs: MSched::Logger.tail(50),
         selected: @last_selected || nil
       }
       @dlg && @dlg.execute_script('window.__ms_receive_full(' + data.to_json + ')')
@@ -180,18 +176,33 @@ module MSched
     t1 = c1.split('-',2)[0]; t2 = c2.split('-',2)[0]
     # Enforce same prefix/type
     raise 'TYPE_MISMATCH' unless t1 == t2
-    # Full swap: exchange codes (rename) safely using a temporary name to avoid collisions.
+    # Full swap: exchange codes AND metadata (brand, notes, subtype, flags, etc.)
+    MSched::Logger.info(:swap_begin, a: ida, b: idb, a_meta: meta1, b_meta: meta2, a_name: m1.display_name, b_name: m2.display_name)
+    # while renaming safely using a temporary name to avoid collisions.
     Undo.wrap('Swap Codes') do
       tmp = "__swap_#{Time.now.to_i}_#{rand(100000)}"
-      # Move m1 away
+      # Prepare metadata without code/type for clean swap
+      m1_meta_base = (meta1 || {}).dup; m1_meta_base.delete('code'); m1_meta_base.delete('type')
+      m2_meta_base = (meta2 || {}).dup; m2_meta_base.delete('code'); m2_meta_base.delete('type')
+
+      # Move m1 away to avoid name collision
       m1.name = tmp
       MetadataStore.write_meta(m1, meta1.merge({ 'code'=>nil }))
-      # Assign code1 to m2
+
+      # Assign m1's metadata (w/ code/type from c1) to m2
       m2.name = c1
-      MetadataStore.write_meta(m2, meta2.merge({ 'code'=>c1, 'type'=>t1 }))
-      # Assign code2 to m1
+      MetadataStore.write_meta(m2, m1_meta_base.merge({ 'code'=>c1, 'type'=>t1 }))
+
+      # Assign m2's metadata (w/ code/type from c2) to m1
       m1.name = c2
-      MetadataStore.write_meta(m1, meta1.merge({ 'code'=>c2, 'type'=>t2 }))
+      MetadataStore.write_meta(m1, m2_meta_base.merge({ 'code'=>c2, 'type'=>t2 }))
+    end
+    # Post-swap snapshot
+    begin
+      m1_after = MetadataStore.read_meta(m1); m2_after = MetadataStore.read_meta(m2)
+      MSched::Logger.info(:swap_done, a: ida, b: idb, a_meta: m1_after, b_meta: m2_after, a_name: m1.display_name, b_name: m2.display_name)
+    rescue => e
+      MSched::Logger.warn(:swap_postlog_error, message: e.message)
     end
     EventBus.publish(:data_changed, {}); { ok: true }
   end

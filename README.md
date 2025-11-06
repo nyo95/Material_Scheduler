@@ -66,3 +66,10 @@ This project is licensed under the MIT License. See `LICENSE` for details.
 
 ## Credits
 Built by/for `@nyo95`. Feedback and contributions are welcome.
+
+## Changelog highlights
+- v0.4.x
+  - Swap: full metadata swap with guards (locked/hidden disallowed)
+  - Normalize: robust numbering with name-conflict handling
+  - Scheduler: Enter-to-apply per-row; Apply buttons use check icon
+  - Logs: added Logs panel in UI; backend provides recent tail and file logging (`msched.log`)

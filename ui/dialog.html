@@ -55,8 +55,19 @@
 
   <footer class='ms-footer'>
     <div id='status' class='status'>Ready</div>
-    <div id='log-dot' class='log-dot' title='Logger live'></div>
+    <div style="display:flex; align-items:center; gap:8px">
+      <button id='btn-logs' class='btn' title='Show Logs'>Logs</button>
+      <div id='log-dot' class='log-dot' title='Logger live'></div>
+    </div>
   </footer>
+
+  <div id='log-panel' class='log-panel' style='display:none'>
+    <div class='log-head'>
+      <div>Logs (latest)</div>
+      <button id='btn-close-logs' class='btn mini'>Close</button>
+    </div>
+    <div id='log-list' class='log-list'></div>
+  </div>
 
   <div id='toast' class='toast'></div>
 

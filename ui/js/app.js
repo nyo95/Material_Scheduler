@@ -88,3 +88,35 @@ window.addEventListener('DOMContentLoaded', function(){
   }catch(e){}
 });
 
+// Lightweight log panel wiring (appends to existing behavior)
+(function(){
+  function renderLogs(){
+    var listEl = document.querySelector('#log-list'); if(!listEl) return;
+    var logs = (window.State && State.logs) || [];
+    var html = logs.map(function(l){
+      var ts = l.ts || '';
+      var lv = (l.level||'').toString();
+      var ev = l.event || '';
+      var data = l.data ? JSON.stringify(l.data) : '';
+      var cls = lv==='error' ? 'log-level-error' : (lv==='warn' ? 'log-level-warn' : 'log-level-info');
+      return '<div class="log-item '+cls+'">['+ts+'] '+lv.toUpperCase()+' '+ev+' '+data+'</div>';
+    }).join('');
+    listEl.innerHTML = html || '<div class="muted">No logs</div>';
+  }
+  // Patch receive_full to also refresh logs
+  var __orig_receive_full = window.__ms_receive_full;
+  window.__ms_receive_full = function(data){
+    try{ if(__orig_receive_full) __orig_receive_full(data); }catch(e){}
+    try{ window.State = window.State || {}; State.logs = data && data.logs || []; renderLogs(); }catch(e){}
+  };
+  // Toggle handlers
+  function bindToggles(){
+    var btn = document.querySelector('#btn-logs'); var dot=document.querySelector('#log-dot'); var panel=document.querySelector('#log-panel'); var close=document.querySelector('#btn-close-logs');
+    function toggle(){ if(!panel) return; var sh = panel.style.display !== 'none'; panel.style.display = sh ? 'none' : 'block'; if(!sh) renderLogs(); }
+    if(btn) btn.addEventListener('click', toggle);
+    if(dot) dot.addEventListener('click', toggle);
+    if(close) close.addEventListener('click', toggle);
+  }
+  try{ bindToggles(); }catch(e){}
+})();
+

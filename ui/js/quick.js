@@ -36,7 +36,7 @@
               <button class="flag ${p.sample?'on':''}" data-k="sample" title="Sample"><svg width="16" height="16"><use href="#ico-flask"/></svg></button>
               <button class="flag ${p.hidden?'on':''}" data-k="hidden" title="Hidden"><svg width="16" height="16"><use href="#ico-eye"/></svg></button>
               <button class="flag ${p.sample_received?'on':''}" data-k="received" title="Received"><svg width="16" height="16"><use href="#ico-check"/></svg></button>
-              <button class="btn btn-primary btn-lg" id="q_apply" title="Apply changes"><svg width="16" height="16" style="margin-right:6px"><use href="#ico-apply"/></svg>Apply</button>
+              <button class=\"btn btn-primary btn-lg\" id=\"q_apply\" title=\"Apply changes\"><svg width=\"16\" height=\"16\"><use href=\"#ico-check\"/></svg></button>
             </div>
           </div>
         </div>
@@ -64,3 +64,4 @@
   }
   return { render: render, onSelected: onSelected };
 })();
+
