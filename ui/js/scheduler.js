@@ -14,11 +14,11 @@
       `${th('subtype','Type (SKU)',null,'col-subtype')}`+
       `${th('notes','Notes',null,'col-notes')}`+
       `${th('flags','Flags',200,'col-flags')}`+
-      `<th style="width:60px"><span class="col-resizer" data-k="${key}"></span></th>`+
+      `<th style="width:60px"></th>`+
       `</tr></thead><tbody id="sch_rows"></tbody></table></div>`;
   }
   function filterOptions(){ const kinds=State.kinds||{}; const arr=['<option value="">All types</option>'].concat(Object.keys(kinds).sort().map(k=>`<option value="${k}" ${filterType===k?'selected':''}>${kinds[k]||k}</option>`)); return arr.join(''); }
-  function th(key,label,w,extraCls){ const st=w?` style=\\"width:${w}px\\"`:''; const arrow = sortKey===key ? (sortDir==='asc'?' \▲':' \▼') : ''; const cls = `sortable ${extraCls||''}`; return `<th data-k=\"${key}\"${st} class=\"${cls}\">${label}${arrow}<span class="col-resizer" data-k="${key}"></span></th>` }
+  function th(key,label,w,extraCls){ const st=w?` style=\\"width:${w}px\\"`:''; const arrow = sortKey===key ? (sortDir==='asc'?' ▲':' ▼') : ''; const cls = `sortable ${extraCls||''}`; return `<th data-k=\"${key}\"${st} class=\"${cls}\">${label}${arrow}<span class="col-resizer" data-k="${key}"></span></th>` }
   function row(r){
     const disabled = r.locked ? 'disabled' : '';
     const sw = r.swatch||{}; let swStyle='';
@@ -32,7 +32,7 @@
       `<td class="td-type cell-input col-type"><select class="t_type" ${disabled}>${typeOptionsLabel(r.type)}</select></td>`+
       `<td class="td-brand cell-input col-brand"><input class="t_brand" type="text" value="${r.brand||''}" ${disabled}></td>`+
       `<td class="td-subtype cell-input col-subtype"><input class="t_subtype" type="text" value="${r.subtype||''}" ${disabled}></td>`+
-      `<td class="td-notes cell-input col-notes"><input class="t_notes" type="text" value="${r.notes||''}" ${disabled}></td>`+
+      `<td class="td-notes cell-input col-notes align-top"><textarea class="t_notes" rows="1" ${disabled}>${(r.notes||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</textarea></td>`+
       `<td class="td-flags col-flags">${flagHtml(r)}</td>`+
       `<td class="td-actions">`+
         `<button class="btn mini t_apply" title="Apply changes" ${isDirty?'':'disabled'}><svg width="14" height="14"><use href="#ico-check"/></svg></button> `+
@@ -71,13 +71,16 @@
     const tsel=tr.querySelector('.t_type'); if(tsel){ tsel.addEventListener('change',()=>{ const prefix=tsel.value||''; markDirty(id,{ prefix:prefix }); }); }
     const tbrand=tr.querySelector('.t_brand'); if(tbrand){ tbrand.addEventListener('input',()=>{ markDirty(id,{ brand:tbrand.value }); }); tbrand.addEventListener('keydown',e=>{ if(e.key==='Enter'){ applyRow(id); } }); }
     const tsub=tr.querySelector('.t_subtype'); if(tsub){ tsub.addEventListener('input',()=>{ markDirty(id,{ subtype:tsub.value }); }); tsub.addEventListener('keydown',e=>{ if(e.key==='Enter'){ applyRow(id); } }); }
-    const tnotes=tr.querySelector('.t_notes'); if(tnotes){ tnotes.addEventListener('input',()=>{ markDirty(id,{ notes:tnotes.value }); }); tnotes.addEventListener('keydown',e=>{ if(e.key==='Enter'){ applyRow(id); } }); }
+    const tnotes=tr.querySelector('.t_notes'); if(tnotes){ function autoH(el){ try{ el.style.height='auto'; el.style.height=Math.min(240, el.scrollHeight)+'px'; }catch(e){} } autoH(tnotes); tnotes.addEventListener('input',()=>{ autoH(tnotes); markDirty(id,{ notes:tnotes.value }); }); tnotes.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); applyRow(id); } }); }
     const tap=tr.querySelector('.t_apply'); if(tap){ tap.addEventListener('click',()=> applyRow(id)); }
     const trv=tr.querySelector('.t_revert'); if(trv){ trv.addEventListener('click',()=>{ delete (State.pending||{})[id]; applySavedWidths(); renderRows(); wireResizers(); }); }
   }); }
   function applyRow(id){ const patch=(State.pending||{})[id]||{}; if(Object.keys(patch).length===0){ return; } patch.id=id; __rpc('quick_apply', patch); delete (State.pending||{})[id]; }
   return { render: render, currentColumns: currentColumns };
 })();
+
+
+
 
 
 
