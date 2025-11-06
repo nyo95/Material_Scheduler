@@ -46,6 +46,9 @@ body.ms.light{
 .log-level-info{ color:#2e7d32 }
 .log-level-warn{ color:#ed6c02 }
 .log-level-error{ color:#d32f2f }
+/* Column resize handle for Scheduler table */
+.col-resizer{ position:absolute; right:0; top:0; width:6px; cursor:col-resize; user-select:none; height:100%; }
+.tablewrap table.table-fixed{ table-layout: fixed; }
 
 /* Components */
 .btn{ border:1px solid var(--border); background:#f3f4f6; color:#111827; border-radius:var(--radius-sm); padding:6px 10px; cursor:pointer }
