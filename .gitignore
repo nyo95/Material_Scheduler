@@ -34,3 +34,9 @@ types_*.bak.json
 old_material_scheduler/material_scheduler/tmp/
 ui/tmp/
 msched.log*
+# Build artifacts
+__rbz_pack/
+*.rbz
+
+# Logs (runtime)
+msched.log*

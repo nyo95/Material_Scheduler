@@ -32,7 +32,7 @@
       `<td class="td-type cell-input col-type"><select class="t_type" ${disabled}>${typeOptionsLabel(r.type)}</select></td>`+
       `<td class="td-brand cell-input col-brand"><input class="t_brand" type="text" value="${r.brand||''}" ${disabled}></td>`+
       `<td class="td-subtype cell-input col-subtype"><input class="t_subtype" type="text" value="${r.subtype||''}" ${disabled}></td>`+
-      `<td class="td-notes cell-input col-notes align-top"><textarea class="t_notes" rows="1" ${disabled}>${(r.notes||'').replace(/&/g,'&amp;').replace(/</g,'&lt;')}</textarea></td>`+
+      `<td class="td-notes cell-input col-notes"><input class="t_notes" type="text" value="${r.notes||''}" ${disabled}></td>`+
       `<td class="td-flags col-flags">${flagHtml(r)}</td>`+
       `<td class="td-actions">`+
         `<button class="btn mini t_apply" title="Apply changes" ${isDirty?'':'disabled'}><svg width="14" height="14"><use href="#ico-check"/></svg></button> `+
@@ -47,9 +47,35 @@
   }
   function typeOptionsLabel(sel){ const kinds=State.kinds||{}; const arr=['<option value="">(Unassigned)</option>'].concat(Object.keys(kinds).sort().map(k=>`<option value="${k}" ${sel===k?'selected':''}>${kinds[k]||k}</option>`)); return arr.join(''); }
   function currentColumns(){ return ['code','type','brand','subtype','notes','locked','sample','hidden','name','kind_label']; }
-  function render(){ const el=$('#tab-scheduler'); el.innerHTML = header(); const q=$('#sch_q'); q.addEventListener('input',renderRows); const f=$('#sch_filter'); f.addEventListener('change',()=>{ filterType=f.value||''; applySavedWidths(); renderRows(); wireResizers(); }); el.querySelectorAll('th.sortable').forEach(th=>th.addEventListener('click',()=>{ const k=th.getAttribute('data-k'); if(sortKey===k){ sortDir = (sortDir==='asc'?'desc':'asc'); } else { sortKey=k; sortDir='asc'; } render(); })); applySavedWidths(); renderRows(); wireResizers(); }
+  function render(){
+    const el = $('#tab-scheduler');
+    try { el.innerHTML = header(); } catch (e) { console.error('header render failed', e); return; }
+    try { const q = document.getElementById('sch_q'); if (q) q.addEventListener('input', renderRows); } catch (e) {}
+    try { const f = document.getElementById('sch_filter'); if (f) f.addEventListener('change', ()=>{ filterType = f.value || ''; renderRows(); }); } catch (e) {}
+    try { el.querySelectorAll('th.sortable').forEach(th=>th.addEventListener('click',()=>{ const k=th.getAttribute('data-k'); if(sortKey===k){ sortDir=(sortDir==='asc'?'desc':'asc'); } else { sortKey=k; sortDir='asc'; } render(); })); } catch (e) {}
+    applySavedWidths();
+    try { renderRows(); } catch (e) { console.error('renderRows immediate failed', e); }
+    try { wireResizers(); } catch (e) {}
+    try { setTimeout(()=>{ try { renderRows(); wireResizers(); } catch (_e) {} }, 0); } catch (e) {}
+  }
   function sortRows(rows){ const k=sortKey; const dir = (sortDir==='asc'?1:-1); return rows.slice().sort((a,b)=>{ let va=a[k], vb=b[k]; va=(va==null?'':va); vb=(vb==null?'':vb); if(typeof va==='string') va=va.toLowerCase(); if(typeof vb==='string') vb=vb.toLowerCase(); if(va<vb) return -1*dir; if(va>vb) return 1*dir; return 0; }); }
-  function renderRows(){ const tb=$('#sch_rows'); const query=($('#sch_q').value||'').toLowerCase(); let rows=State.visibleRows; if(filterType){ rows=rows.filter(r=> (r.type||'')===filterType); } if(query) rows=rows.filter(r=> (r.code||'').toLowerCase().includes(query) || (r.brand||'').toLowerCase().includes(query) || (r.notes||'').toLowerCase().includes(query)); rows=sortRows(rows); tb.innerHTML = rows.map(row).join(''); wireRows(); }
+  function renderRows(){
+    const tb=$('#sch_rows'); if(!tb){ try{ window.__toast && __toast('Scheduler body not found'); }catch(e){} return; }
+    const query=($('#sch_q').value||'').toLowerCase();
+    let rows=(State.rows||[]).filter(r=>!r.hidden);
+    if(filterType){ rows=rows.filter(r=> (r.type||'')===filterType); }
+    if(query) rows=rows.filter(r=> (r.code||'').toLowerCase().includes(query) || (r.brand||'').toLowerCase().includes(query) || (r.notes||'').toLowerCase().includes(query));
+    rows=sortRows(rows);
+    try{
+      tb.innerHTML = rows.length? rows.map(row).join('') : '<tr><td colspan="9" class="muted">No materials to show</td></tr>';
+      try{ if(window.sketchup && window.sketchup.ping){ sketchup.ping('sch_rows='+(rows.length||0)); } }catch(_e){}
+    }catch(e){
+      console.error('renderRows error', e);
+      tb.innerHTML = '<tr><td colspan="9" class="muted">Render error: '+(e && e.message?e.message:'')+'</td></tr>';
+      try{ window.__toast && __toast('Scheduler error: '+e.message); if(window.sketchup && sketchup.ping){ sketchup.ping('sch_err='+e.message); } }catch(_){}
+    }
+    wireRows();
+  }
   function markDirty(id, patch){ if(!State.pending) State.pending={}; const cur=State.pending[id]||{}; State.pending[id]=Object.assign({},cur,patch||{}); const tr=document.querySelector(`tr[data-id="${id}"]`); if(tr){ tr.classList.add('dirty'); const ap=tr.querySelector('.t_apply'), rv=tr.querySelector('.t_revert'); if(ap) ap.removeAttribute('disabled'); if(rv) rv.removeAttribute('disabled'); } }
   function wireRows(){ $$('#sch_rows tr').forEach(tr=>{
     const id=parseInt(tr.getAttribute('data-id'),10);
@@ -71,13 +97,15 @@
     const tsel=tr.querySelector('.t_type'); if(tsel){ tsel.addEventListener('change',()=>{ const prefix=tsel.value||''; markDirty(id,{ prefix:prefix }); }); }
     const tbrand=tr.querySelector('.t_brand'); if(tbrand){ tbrand.addEventListener('input',()=>{ markDirty(id,{ brand:tbrand.value }); }); tbrand.addEventListener('keydown',e=>{ if(e.key==='Enter'){ applyRow(id); } }); }
     const tsub=tr.querySelector('.t_subtype'); if(tsub){ tsub.addEventListener('input',()=>{ markDirty(id,{ subtype:tsub.value }); }); tsub.addEventListener('keydown',e=>{ if(e.key==='Enter'){ applyRow(id); } }); }
-    const tnotes=tr.querySelector('.t_notes'); if(tnotes){ function autoH(el){ try{ el.style.height='auto'; el.style.height=Math.min(240, el.scrollHeight)+'px'; }catch(e){} } autoH(tnotes); tnotes.addEventListener('input',()=>{ autoH(tnotes); markDirty(id,{ notes:tnotes.value }); }); tnotes.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); applyRow(id); } }); }
+    const tnotes=tr.querySelector('.t_notes'); if(tnotes){ tnotes.addEventListener('input',()=>{ markDirty(id,{ notes:tnotes.value }); }); tnotes.addEventListener('keydown',e=>{ if(e.key==='Enter'){ applyRow(id); } }); }
     const tap=tr.querySelector('.t_apply'); if(tap){ tap.addEventListener('click',()=> applyRow(id)); }
     const trv=tr.querySelector('.t_revert'); if(trv){ trv.addEventListener('click',()=>{ delete (State.pending||{})[id]; applySavedWidths(); renderRows(); wireResizers(); }); }
   }); }
   function applyRow(id){ const patch=(State.pending||{})[id]||{}; if(Object.keys(patch).length===0){ return; } patch.id=id; __rpc('quick_apply', patch); delete (State.pending||{})[id]; }
   return { render: render, currentColumns: currentColumns };
 })();
+
+
 
 
 

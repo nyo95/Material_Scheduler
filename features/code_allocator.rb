@@ -57,6 +57,7 @@
       MetadataStore.write_meta(mat, { 'type'=>prefix, 'code'=>code })
       # Guard against name conflicts by bumping number until rename succeeds
       n = number.to_i
+      attempts = 0
       loop do
         begin
           mat.name = RulesEngine.make_code(prefix, n)
@@ -64,8 +65,22 @@
           MSched::Logger.info(:code_set, id: mat.persistent_id, code: RulesEngine.make_code(prefix, n), prefix: prefix, number: n)
           return RulesEngine.make_code(prefix, n)
         rescue => _e
+          # Try resolving conflict if existing material with that name is UNUSED
+          begin
+            target = RulesEngine.make_code(prefix, n)
+            conflict = Sketchup.active_model.materials[target] rescue nil
+            if conflict
+              used = MetadataStore.used_material_ids
+              unless used.include?(conflict.persistent_id)
+                conflict.name = "__old_#{target}_#{Time.now.to_i}"
+              end
+            end
+          rescue
+          end
           MSched::Logger.warn(:code_conflict_rename, id: mat.persistent_id, try_number: n)
           n += 1
+          attempts += 1
+          raise 'ALLOCATE_RENAME_CONFLICT' if attempts > 200
         end
       end
     end
@@ -115,7 +130,26 @@
                 occupied << cur_n unless occupied.include?(cur_n)
               else
                 old = (meta['code'] || m.name)
-                m.name = code
+                begin
+                  m.name = code
+                rescue
+                  # If name conflict with UNUSED material, temporarily rename the conflicting one
+                  begin
+                    conflict = Sketchup.active_model.materials[code] rescue nil
+                    if conflict
+                      used = MetadataStore.used_material_ids
+                      unless used.include?(conflict.persistent_id)
+                        conflict.name = "__old_#{code}_#{Time.now.to_i}"
+                        m.name = code
+                      else
+                        raise 'NAME_IN_USE'
+                      end
+                    else
+                      raise 'RENAME_FAILED'
+                    end
+                  rescue
+                  end
+                end
                 MetadataStore.write_meta(m, { 'code' => code, 'type' => prefix })
                 changed << { id: m.persistent_id, from: old, to: code }
                 occupied << cur_n unless occupied.include?(cur_n)

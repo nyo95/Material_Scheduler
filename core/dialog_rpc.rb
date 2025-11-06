@@ -181,9 +181,13 @@ module MSched
     # while renaming safely using a temporary name to avoid collisions.
     Undo.wrap('Swap Codes') do
       tmp = "__swap_#{Time.now.to_i}_#{rand(100000)}"
-      # Prepare metadata without code/type for clean swap
-      m1_meta_base = (meta1 || {}).dup; m1_meta_base.delete('code'); m1_meta_base.delete('type')
-      m2_meta_base = (meta2 || {}).dup; m2_meta_base.delete('code'); m2_meta_base.delete('type')
+      # Prepare metadata maps ensuring keys missing on one side are explicitly cleared on the other
+      m1_meta_base = (meta1 || {}).dup
+      m2_meta_base = (meta2 || {}).dup
+      keys = (m1_meta_base.keys + m2_meta_base.keys).uniq - ['code','type']
+      # Build payloads that include explicit nils to clear stale values when merging
+      m1_clean = {}; m2_clean = {}
+      keys.each { |k| m1_clean[k] = m1_meta_base[k]; m2_clean[k] = m2_meta_base[k] }
 
       # Move m1 away to avoid name collision
       m1.name = tmp
@@ -191,11 +195,11 @@ module MSched
 
       # Assign m1's metadata (w/ code/type from c1) to m2
       m2.name = c1
-      MetadataStore.write_meta(m2, m1_meta_base.merge({ 'code'=>c1, 'type'=>t1 }))
+      MetadataStore.write_meta(m2, m2_clean.merge(m1_clean).merge({ 'code'=>c1, 'type'=>t1 }))
 
       # Assign m2's metadata (w/ code/type from c2) to m1
       m1.name = c2
-      MetadataStore.write_meta(m1, m2_meta_base.merge({ 'code'=>c2, 'type'=>t2 }))
+      MetadataStore.write_meta(m1, m1_clean.merge(m2_clean).merge({ 'code'=>c2, 'type'=>t2 }))
     end
     # Post-swap snapshot
     begin

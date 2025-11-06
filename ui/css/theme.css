@@ -49,20 +49,16 @@ body.ms.light{
 /* Column resize handle for Scheduler table */
 .col-resizer{ position:absolute; right:0; top:0; width:6px; cursor:col-resize; user-select:none; height:100%; }
 .tablewrap table.table-fixed{ table-layout: fixed; }
-/* Sticky table header inside scrollable panels */
-.tablewrap thead th{ position: sticky; top: 0; background: #fff; z-index: 1; }
-/* Subtle zebra + hover for readability */
-.tablewrap tbody tr:nth-child(odd){ background:#f8fafc }
-.tablewrap tbody tr:hover{ background:#eef2ff }
-/* Make inputs fill cells */
-.cell-input input,.cell-input select,.cell-input textarea{ width:100%; box-sizing:border-box }
 
 /* App layout: constrain scroll inside tab panels (except Quick) */
 html, body{ height:100%; }
 body.ms{ display:flex; flex-direction:column; height:100vh; overflow:hidden; }
 .ms-content{ flex:1 1 auto; overflow:hidden; }
 .tabpanel{ height:100%; }
-.tabpanel.scrollable{ overflow:auto; }
+.tabpanel.scrollable{ display:flex; flex-direction:column; overflow:hidden; }
+/* make table area the only scrollable part inside a tab */
+.tabpanel.scrollable .toolbar{ flex:0 0 auto; }
+.tabpanel.scrollable .tablewrap{ flex:1 1 auto; overflow:auto; }
 
 /* Components */
 .btn{ border:1px solid var(--border); background:#f3f4f6; color:#111827; border-radius:var(--radius-sm); padding:6px 10px; cursor:pointer }
